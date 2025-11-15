@@ -76,3 +76,48 @@ END $$
 DELIMITER ;
 
 -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Search podcasts
+DROP PROCEDURE IF EXISTS search_podcasts;
+DELIMITER $$
+CREATE PROCEDURE search_podcasts
+(
+	name VARCHAR(32),
+    genre VARCHAR(32),
+    language VARCHAR(32),
+    platform VARCHAR(32),
+    host_first VARCHAR(32),
+    host_last VARCHAR(32),
+    guest_first VARCHAR(32),
+    guest_last VARCHAR(32),
+    year DATE
+)
+BEGIN
+	-- Declare flags for filters
+	DECLARE name_flag TINYINT DEFAULT 0;
+    DECLARE genre_flag TINYINT DEFAULT 0;
+    DECLARE language_flag TINYINT DEFAULT 0;
+    DECLARE platform_flag TINYINT DEFAULT 0;
+    DECLARE host_flag TINYINT DEFAULT 0;
+    DECLARE guest_flag TINYINT DEFAULT 0;
+    DECLARE year_flag TINYINT DEFAULT 0;
+    
+    -- Set flags to disable check if filter is null
+    IF name IS NULL THEN SET name_flag = 1; END IF;
+	IF genre IS NULL THEN SET genre_flag = 1; END IF;
+	IF language IS NULL THEN SET language_flag = 1; END IF;
+	IF platform IS NULL THEN SET platform_flag = 1; END IF;
+	IF host_first IS NULL AND host_last IS NULL THEN SET host_flag = 1; END IF;
+	IF guest_first IS NULL AND guest_last IS NULL THEN SET guest_flag = 1; END IF;
+	IF year IS NULL THEN SET year_flag = 1; END IF;
+	
+    -- Return table based on passed filters
+	SELECT * FROM podcast AS p
+    WHERE (p.name = name OR name_flag) AND
+		  (p.genre = genre OR genre_flag) AND
+          (p.language = language OR language_flag) AND
+          (p.platform = platform OR platform_flag) AND
+          (p.host_first = name OR name_flag) AND
+          (p.name = name OR name_flag) AND
+          (p.name = name OR name_flag);
+END $$
+DELIMITER ;
