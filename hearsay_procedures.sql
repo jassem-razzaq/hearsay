@@ -49,3 +49,30 @@ END $$
 DELIMITER ;
 
 -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Get friends
+DROP PROCEDURE IF EXISTS get_friends;
+DELIMITER $$
+CREATE PROCEDURE get_friends
+(
+	user_id INT
+)
+BEGIN
+	SELECT * FROM user_to_user WHERE id1 = user_id AND status = "accepted";
+END $$
+DELIMITER ;
+
+-- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Delete friend
+DROP PROCEDURE IF EXISTS delete_friend;
+DELIMITER $$
+CREATE PROCEDURE delete_friend
+(
+	user_id INT,
+    user_to_delete_id INT
+) 
+BEGIN
+	DELETE FROM user_to_user WHERE id1 = user_id AND id2 = user_to_delete_id AND status = "accepted";
+END $$
+DELIMITER ;
+
+-- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
