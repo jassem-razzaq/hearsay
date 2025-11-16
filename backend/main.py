@@ -21,11 +21,14 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class UserBio(BaseModel):
+    bio: str
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
-@app.post("/users")
+@app.post("/users", status_code=201)
 async def createUser(data: UserCreate): # Check if email is already registered
     try:
         connection = pymysql.connect(
@@ -63,8 +66,7 @@ async def logInUser(data: UserLogin):
             cursorclass=pymysql.cursors.DictCursor,
         )
         cursor = connection.cursor()
-        query = "SELECT * FROM user WHERE username=%s"
-        cursor.execute(query, (data.username,))
+        cursor.execute("SELECT * FROM user WHERE username=%s", (data.username,))
         user_info = cursor.fetchone()
 
         if not user_info:
@@ -77,5 +79,40 @@ async def logInUser(data: UserLogin):
             return {"user_id": user_info["id"], "logged_in": True}
         else:
             raise HTTPException(status_code=401, detail="Incorrect password")
+    finally:
+        connection.close()
+
+@app.get("/users/{user_id}")
+async def getUser(user_id):
+    try:
+        connection = pymysql.connect(
+            host=HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DATABASE,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        cursor = connection.cursor()
+        cursor.callproc("get_user", (user_id,))
+        user_info = cursor.fetchone()
+        return user_info
+    finally:
+        connection.close()
+
+
+@app.put("/users/{user_id}")
+async def updateBio(user_id: int):
+    try:
+        connection = pymysql.connect(
+            host=HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DATABASE,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        cursor = connection.cursor()
+        
     finally:
         connection.close()
