@@ -134,6 +134,15 @@ async def getUserFriends(user_id: int):
             database=DATABASE,
             cursorclass=pymysql.cursors.DictCursor
         )
-
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM user WHERE id=%s", (user_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail=f"User not found")
+        
+        cursor.callproc("get_friends", (user_id,))
+        user_friends = cursor.fetchall()
+        return user_friends
     finally:
         connection.close()
+
+    
