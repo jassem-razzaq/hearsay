@@ -1,66 +1,81 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, EmailStr
 import pymysql
 import bcrypt
-from typing import Dict
 
 app = FastAPI()
 
-host = "localhost"
-db_user = "root"
-db_password = "root1234"
-database = "hearsay_db"
+HOST = "localhost"
+DB_USER = "root"
+DB_PASSWORD = "root1234"
+DATABASE = "hearsay_db"
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+    first_name: str
+    last_name: str
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
 @app.post("/users")
-async def createUser(data: Dict):
+async def createUser(data: UserCreate): # Check if email is already registered
     try:
         connection = pymysql.connect(
-            host=host,
-            user=db_user,
-            password=db_password,
-            database=database,
+            host=HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DATABASE,
             cursorclass=pymysql.cursors.DictCursor,
         )
         cursor = connection.cursor()
 
-        email = data["email"]
-        username = data["username"]
-        password = data["password"]
-        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-        first_name = data["firstName"]
-        last_name = data["lastName"]
-        cursor.callproc("create_user", (email, username, hashed_password, first_name, last_name))
+        cursor.execute("SELECT id FROM user WHERE email=%s", (data.email,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail=f"Email {data.email} is already registered")
+
+        cursor.execute("SELECT id FROM user WHERE username=%s", (data.username,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail=f"Username {data.username} is already taken")
+
+        hashed_password = bcrypt.hashpw(data.password.encode("utf-8"), bcrypt.gensalt())
+        cursor.callproc("create_user", (data.email, data.username, hashed_password, data.first_name, data.last_name))
         connection.commit()
-        return {"message": "User created successfully"}
-    except pymysql.IntegrityError as e:
-        return {"message": "User already exists"}
+        return {"message": f"User {data.username} created successfully"}
     finally:
         connection.close()
 
 @app.post("/users/login")
-async def logInUser(data: Dict):
+async def logInUser(data: UserLogin):
     try:
         connection = pymysql.connect(
-            host=host,
-            user=db_user,
-            password=db_password,
-            database=database,
+            host=HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DATABASE,
             cursorclass=pymysql.cursors.DictCursor,
         )
         cursor = connection.cursor()
-
-        username = data["username"]
-        password = data["password"].encode("utf-8")
         query = "SELECT * FROM user WHERE username=%s"
-        cursor.execute(query, (username,))
+        cursor.execute(query, (data.username,))
         user_info = cursor.fetchone()
+
+        if not user_info:
+            raise HTTPException(status_code=404, detail=f"User not found")
+        
+        password = data.password.encode("utf-8")
         stored_password = user_info["password_hash"].encode("utf-8")
+
         if bcrypt.checkpw(password, stored_password):
             return {"user_id": user_info["id"], "logged_in": True}
         else:
-            return {"user_id": None, "logged_in": False}
+            raise HTTPException(status_code=401, detail="Incorrect password")
     finally:
         connection.close()
