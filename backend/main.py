@@ -221,3 +221,22 @@ async def getHosts():
         raise HTTPException(status_code=500, detail=f"Failed to get hosts")
     finally:
         connection.close()
+
+@app.get("/podcasts/{podcast_id}/episodes")
+async def getPodcastEpisodes(podcast_id: int):
+    try:
+        connection = pymysql.connect(
+            host=HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DATABASE,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        cursor = connection.cursor()
+        cursor.callproc("get_episodes", (podcast_id,))
+        podcast_episodes = cursor.fetchall()
+        return {"podcast_episodes": podcast_episodes}
+    except pymysql.MySQLError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get episodes from podcast {podcast_id}")
+    finally:
+        connection.close()
