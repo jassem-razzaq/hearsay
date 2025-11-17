@@ -1,4 +1,56 @@
 /*
+Send friend request
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS send_friend_request $$
+CREATE PROCEDURE send_friend_request(IN requester_id_p INT, IN friend_id_p INT)
+BEGIN
+	IF requester_id_p = friend_id_p THEN
+		SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT = "Cannot send friend request to yourself";
+	END IF;
+    
+	IF EXISTS (SELECT * FROM user_to_user 
+			   WHERE (id1 = requester_id_p AND id2 = friend_id_p)
+			       OR (id1 = friend_id_p AND id2 = requester_id_p)) THEN
+		SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT = "Friend request or friendship already exists";
+	END IF;
+    
+    INSERT INTO user_to_user (id1, id2, status)
+    VALUES (requester_id_p, friend_id_p, "pending");
+END $$
+DELIMITER ;
+ 
+CALL send_friend_request(1, 51);
+
+/*
+Accept a friend request
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS accept_friend_request $$
+CREATE PROCEDURE accept_friend_request(IN user_id_p INT, IN requester_id_p INT)
+BEGIN
+	IF EXISTS (
+		SELECT * FROM user_to_user
+        WHERE id1 = requester_id_p AND id2 = user_id_p
+	) THEN
+		UPDATE user_to_user
+        SET status = "accepted", date_added = CURRENT_DATE
+        WHERE id1 = requester_id_p AND id2 = user_id_p;
+	ELSE
+		SIGNAL SQLSTATE "45000"
+		SET MESSAGE_TEXT="Unable to add friend";
+	END IF;
+END $$
+DELIMITER ;
+
+CALL accept_friend_request(51, 1);
+SELECT * FROM user_to_user WHERE id2 = 51;
+
+
+
+/*
 Insert podcast review
 */
 DELIMITER $$
@@ -90,8 +142,8 @@ CALL get_global_podcast_avg_rating(1);
 Get global podcast avg rating by episode
 */
 DELIMITER $$
-DROP PROCEDURE IF EXISTS get_global_podcast_episode_avg_rating $$
-CREATE PROCEDURE get_global_podcast_episode_avg_rating(IN podcast_id_p INT)
+DROP PROCEDURE IF EXISTS get_global_podcast_avg_rating_by_episode $$
+CREATE PROCEDURE get_global_podcast_avg_rating_by_episode(IN podcast_id_p INT)
 BEGIN
 	SELECT AVG(rating)
     FROM episode_review
@@ -99,7 +151,25 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL get_global_podcast_episode_avg_rating(1);
+CALL get_global_podcast_avg_rating_by_episode(1);
+
+
+
+/*
+Get the user's friends' average rating of a podcast
+*/
+DELIMITER $$
+DROP FUNCTION IF EXISTS get_user_friends_podcast_avg_rating $$
+CREATE FUNCTION get_user_friends_podcast_avg_rating(user_id_p INT, podcast_id_p INT)
+RETURNS DECIMAL(4,2)
+DETERMINISTIC READS SQL DATA
+BEGIN
+	DECLARE friends_avg_rating DECIMAL(4,2);
+    
+    SELECT AVG(rating) INTO friends_avg_rating
+    FROM user_to_user
+END $$
+DELIMITER ;
 
 
 
@@ -138,17 +208,7 @@ CALL get_user_podcast_episode_rating(8, 16, 1);
 
 
 /*
-Get a user's avg episode rating for a podcast
+Get an episode's global average rating
 */
 DELIMITER $$
-DROP PROCEDURE IF EXISTS get_user_podcast_episode_avg_rating $$
-CREATE PROCEDURE get_user_podcast_episode_avg_rating(IN user_id_p INT, IN podcast_id_p INT)
-BEGIN
-	SELECT AVG(rating)
-    FROM episode_review
-    WHERE user_id = user_id_p AND podcast_id = podcast_id_p;
-END $$
-DELIMITER ;
-
-CALL get_user_podcast_episode_avg_rating(1, 1);
-
+DROP PROCEDURE IF EXISTS get_global_episode_avg_rating
