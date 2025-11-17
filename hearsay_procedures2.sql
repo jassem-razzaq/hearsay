@@ -77,13 +77,14 @@ DROP PROCEDURE IF EXISTS get_global_podcast_avg_rating $$
 CREATE PROCEDURE get_global_podcast_avg_rating(IN podcast_id_p INT)
 BEGIN
 	SELECT AVG(rating)
-    FROM podcast 
-	JOIN podcast_review ON podcast.id = podcast_review.podcast_id
-    WHERE podcast.id = podcast_id_p;
+    FROM podcast_review
+    WHERE podcast_id = podcast_id_p;
 END $$
 DELIMITER ;
 
 CALL get_global_podcast_avg_rating(1);
+
+
 
 /*
 Get global podcast avg rating by episode
@@ -93,9 +94,8 @@ DROP PROCEDURE IF EXISTS get_global_podcast_episode_avg_rating $$
 CREATE PROCEDURE get_global_podcast_episode_avg_rating(IN podcast_id_p INT)
 BEGIN
 	SELECT AVG(rating)
-    FROM podcast 
-    JOIN episode_review ON podcast.id = episode_review.podcast_id
-    WHERE podcast.id = podcast_id_p;
+    FROM episode_review
+    WHERE podcast_id = podcast_id_p;
 END $$
 DELIMITER ;
 
@@ -110,10 +110,9 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS get_user_podcast_rating $$
 CREATE PROCEDURE get_user_podcast_rating(IN user_id_p INT, IN podcast_id_p INT)
 BEGIN
-	SELECT rating
-    FROM user
-    JOIN podcast_review ON user.id = podcast_review.user_id
-    WHERE user.id = user_id_p AND podcast_review.podcast_id = podcast_id_p;
+    SELECT rating
+    FROM podcast_review
+    WHERE user_id = user_id_p AND podcast_id = podcast_id_p;
 END $$
 DELIMITER ;
 
@@ -122,5 +121,34 @@ CALL get_user_podcast_rating(4, 5);
 
 
 /*
+Get a user's rating of an episode
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_user_podcast_episode_rating $$
+CREATE PROCEDURE get_user_podcast_episode_rating(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT)
+BEGIN
+	SELECT rating
+    FROM episode_review
+    WHERE user_id = user_id_p AND podcast_id = podcast_id_p AND episode_num = episode_num_p;
+END $$
+DELIMITER ;
+
+CALL get_user_podcast_episode_rating(8, 16, 1);
+
+
+
+/*
 Get a user's avg episode rating for a podcast
 */
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_user_podcast_episode_avg_rating $$
+CREATE PROCEDURE get_user_podcast_episode_avg_rating(IN user_id_p INT, IN podcast_id_p INT)
+BEGIN
+	SELECT AVG(rating)
+    FROM episode_review
+    WHERE user_id = user_id_p AND podcast_id = podcast_id_p;
+END $$
+DELIMITER ;
+
+CALL get_user_podcast_episode_avg_rating(1, 1);
+
