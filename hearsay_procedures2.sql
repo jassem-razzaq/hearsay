@@ -94,28 +94,28 @@ SELECT * FROM podcast_review WHERE user_id = 51;
 
 
 /*
-Insert podcast episode review
+Insert episode review
 */
 DELIMITER $$
-DROP PROCEDURE IF EXISTS insert_podcast_episode_review $$
-CREATE PROCEDURE insert_podcast_episode_review(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT, IN rating_p INT, IN text_p VARCHAR(255))
+DROP PROCEDURE IF EXISTS insert_episode_review $$
+CREATE PROCEDURE insert_episode_review(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT, IN rating_p INT, IN text_p VARCHAR(255))
 BEGIN
     INSERT INTO episode_review (user_id, podcast_id, episode_num, rating, text) 
     VALUES (user_id_p, podcast_id_p, episode_num_p, rating_p, text_p);
 END $$
 DELIMITER ;
 
-CALL insert_podcast_episode_review(51, 1, 1169, 5, "Amazing");
+CALL insert_episode_review(51, 1, 1169, 5, "Amazing");
 SELECT * FROM episode_review WHERE user_id = 51;
 
 
 
 /*
-Update podcast episode review
+Update episode review
 */
 DELIMITER $$
-DROP PROCEDURE IF EXISTS update_podcast_episode_review $$
-CREATE PROCEDURE update_podcast_episode_review(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT, IN rating_p INT, IN text_p VARCHAR(255))
+DROP PROCEDURE IF EXISTS update_episode_review $$
+CREATE PROCEDURE update_episode_review(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT, IN rating_p INT, IN text_p VARCHAR(255))
 BEGIN
     UPDATE episode_review
     SET rating = rating_p, text = text_p
@@ -123,7 +123,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL update_podcast_episode_review(51, 1, 1169, 2, "Boring");
+CALL update_episode_review(51, 1, 1169, 2, "Boring");
 SELECT * FROM episode_review WHERE user_id = 51;
 
 
@@ -209,6 +209,9 @@ DELIMITER ;
 INSERT INTO episode_review (user_id, podcast_id, episode_num, rating, text) VALUES (51, 4, 1, 1, NULL);
 INSERT INTO episode_review (user_id, podcast_id, episode_num, rating, text) VALUES (51, 4, 2, 5, NULL);
 SELECT get_user_friends_podcast_avg_rating_by_episode(1, 4);
+
+
+
 /*
 Get a user's rating of a podcast
 */
@@ -230,8 +233,8 @@ CALL get_user_podcast_rating(4, 5);
 Get a user's rating of an episode
 */
 DELIMITER $$
-DROP PROCEDURE IF EXISTS get_user_podcast_episode_rating $$
-CREATE PROCEDURE get_user_podcast_episode_rating(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT)
+DROP PROCEDURE IF EXISTS get_user_episode_rating $$
+CREATE PROCEDURE get_user_episode_rating(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT)
 BEGIN
 	SELECT rating
     FROM episode_review
@@ -239,7 +242,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL get_user_podcast_episode_rating(8, 16, 1);
+CALL get_user_episode_rating(8, 16, 1);
 
 
 
@@ -247,4 +250,45 @@ CALL get_user_podcast_episode_rating(8, 16, 1);
 Get an episode's global average rating
 */
 DELIMITER $$
-DROP PROCEDURE IF EXISTS get_global_episode_avg_rating
+DROP FUNCTION IF EXISTS get_global_episode_avg_rating $$
+CREATE FUNCTION get_global_episode_avg_rating(podcast_id_p INT, episode_num_p INT)
+RETURNS DECIMAL (2,1)
+DETERMINISTIC READS SQL DATA
+BEGIN
+	DECLARE episode_rating DECIMAL(2,1);
+
+	SELECT AVG(rating) INTO episode_rating
+    FROM episode_review
+    WHERE podcast_id = podcast_id_p AND episode_num = episode_num_p;
+    
+    RETURN episode_rating;
+END $$
+DELIMITER ;
+
+SELECT get_global_episode_avg_rating(4, 1);
+
+
+
+/*
+Get an episode's average rating from a user's friends
+*/
+DELIMITER $$
+DROP FUNCTION IF EXISTS get_user_friends_episode_avg_rating $$
+CREATE FUNCTION get_user_friends_episode_avg_rating(user_id_p INT, podcast_id_p INT, episode_num_p INT)
+RETURNS DECIMAL(2,1) 
+DETERMINISTIC READS SQL DATA
+BEGIN
+	DECLARE friends_rating DECIMAL(2,1);
+    
+	SELECT AVG(rating) INTO friends_rating
+    FROM user_to_user
+    JOIN episode_review ON id2 = episode_review.user_id
+    WHERE id1 = user_id_p AND podcast_id = podcast_id_p AND episode_num = episode_num_p;
+    
+    RETURN friends_rating;
+END $$
+DELIMITER ;
+
+SELECT * FROM episode_review WHERE podcast_id = 4;
+SELECT * FROM user_to_user WHERE id1 = 1;
+SELECT get_user_friends_episode_avg_rating(1, 4, 1);
