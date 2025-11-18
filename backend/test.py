@@ -167,7 +167,8 @@ async def searchPodcasts(
         cursor.callproc("search_podcasts", (name, genre, language, platform, host, guest, year))
         filtered_podcasts = cursor.fetchall()
         return {"podcasts": filtered_podcasts}
-    except pymysql.MySQLError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to search podcasts")
+    except pymysql.err.OperationalError as e:
+        error_code, message = e.args
+        raise HTTPException(status_code=400, detail=message)
     finally:
         connection.close()
