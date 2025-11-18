@@ -107,7 +107,7 @@ CREATE TABLE user_to_user (
 	-- user1 adds user2 as a friend
 	id1 INT NOT NULL,
     id2 INT NOT NULL,
-    date_added DATE NOT NULL,   -- Relational attribute
+    date_added DATE NOT NULL DEFAULT (CURRENT_DATE),   -- Relational attribute
     status ENUM("pending", "accepted") NOT NULL,
     FOREIGN KEY (id1) REFERENCES user(id)
     ON UPDATE CASCADE ON DELETE CASCADE,
