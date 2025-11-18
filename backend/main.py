@@ -32,6 +32,10 @@ class PlaylistEp(BaseModel):
     episode_num: int
     playlist_name: str
 
+class Review(BaseModel):
+    rating: int
+    comment: str
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -338,6 +342,94 @@ async def removeFromPlaylist(user_id: int, playlist_ep: PlaylistEp):
         return {"playlistEpisodeAdded": True,
                  "message": "Episode delete from playlist succesfully", "playlist_name": playlist_ep.playlist_name}
     except pymysql.err.OperationalError as e:
+        error_code, message = e.args
+        raise HTTPException(status_code=400, detail=message)
+    finally:
+        connection.close()
+
+@app.post("/podcasts/{podcast_id}/review/{user_id}")
+async def addReviewPodcast(user_id: int, podcast_id: int, review: Review):
+    try:
+        connection = pymysql.connect(
+            host=HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DATABASE,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        cursor = connection.cursor()
+        cursor.callproc("insert_podcast_review", (user_id, podcast_id, review.rating, review.comment))
+        connection.commit()
+        return {"reviewAdded": True, "message": "Review added successfully", "rating": review.rating, "comment": review.comment}
+    except pymysql.err.OperationalError as e:
+        print("exception")
+        error_code, message = e.args
+        raise HTTPException(status_code=400, detail=message)
+    finally:
+        connection.close()
+
+@app.put("/podcasts/{podcast_id}/review/{user_id}")
+async def updateReviewPodcast(user_id: int, podcast_id: int, review: Review):
+    try:
+        connection = pymysql.connect(
+            host=HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DATABASE,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        cursor = connection.cursor()
+        cursor.callproc("update_podcast_review", (user_id, podcast_id, review.rating, review.comment))
+        connection.commit()
+        return {"reviewAdded": True, "message": "Review updated successfully", "rating": review.rating, "comment": review.comment}
+    except pymysql.err.OperationalError as e:
+        print("exception")
+        error_code, message = e.args
+        raise HTTPException(status_code=400, detail=message)
+    finally:
+        connection.close()
+
+@app.post("/podcasts/{podcast_id}/episodes/{episode_num}/review/{user_id}")
+async def addReviewEpisode(user_id: int, podcast_id: int, episode_num: int, review: Review):
+    try:
+        connection = pymysql.connect(
+            host=HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DATABASE,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        cursor = connection.cursor()
+        cursor.callproc("insert_episode_review", (user_id, podcast_id, episode_num, review.rating, review.comment))
+        connection.commit()
+        return {"reviewAdded": True, "message": "Review added successfully", "rating": review.rating, "comment": review.comment}
+    except pymysql.err.OperationalError as e:
+        print("exception")
+        error_code, message = e.args
+        raise HTTPException(status_code=400, detail=message)
+    finally:
+        connection.close()
+
+@app.put("/podcasts/{podcast_id}/episodes/{episode_num}/review/{user_id}")
+async def updateReviewEpisode(user_id: int, podcast_id: int, episode_num: int, review: Review):
+    try:
+        connection = pymysql.connect(
+            host=HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DATABASE,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        cursor = connection.cursor()
+        cursor.callproc("update_episode_review", (user_id, podcast_id, episode_num, review.rating, review.comment))
+        connection.commit()
+        return {"reviewUpdated": True, "message": "Review updated successfully", "rating": review.rating, "comment": review.comment}
+    except pymysql.err.OperationalError as e:
+        print("exception")
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
     finally:
