@@ -1,130 +1,25 @@
-/*
-Send friend request
-*/
-DELIMITER $$
-DROP PROCEDURE IF EXISTS send_friend_request $$
-CREATE PROCEDURE send_friend_request(IN requester_id_p INT, IN friend_id_p INT)
-BEGIN
-	IF requester_id_p = friend_id_p THEN
-		SIGNAL SQLSTATE "45000"
-        SET MESSAGE_TEXT = "Cannot send friend request to yourself";
-	END IF;
-    
-	IF EXISTS (SELECT * FROM user_to_user 
-			   WHERE (id1 = requester_id_p AND id2 = friend_id_p)
-			       OR (id1 = friend_id_p AND id2 = requester_id_p)) THEN
-		SIGNAL SQLSTATE "45000"
-        SET MESSAGE_TEXT = "Friend request or friendship already exists";
-	END IF;
-    
-    INSERT INTO user_to_user (id1, id2, status)
-    VALUES (requester_id_p, friend_id_p, "pending");
-END $$
-DELIMITER ;
- 
-CALL send_friend_request(1, 51);
-SELECT * FROM user_to_user WHERE id1 = 1;
-SELECT * FROM user_to_user WHERE id1 = 51;
+-- CALL send_friend_request(1, 51);
+-- SELECT * FROM user_to_user WHERE id1 = 1;
+-- SELECT * FROM user_to_user WHERE id1 = 51;
 
-/*
-Accept a friend request
-*/
-DELIMITER $$
-DROP PROCEDURE IF EXISTS accept_friend_request $$
-CREATE PROCEDURE accept_friend_request(IN user_id_p INT, IN requester_id_p INT)
-BEGIN
-	IF EXISTS (
-		SELECT * FROM user_to_user
-        WHERE id1 = requester_id_p AND id2 = user_id_p
-	) THEN
-		UPDATE user_to_user
-        SET status = "accepted", date_added = CURRENT_DATE
-        WHERE id1 = requester_id_p AND id2 = user_id_p;
-        
-        INSERT INTO user_to_user (id1, id2, status, date_added)
-        VALUES (user_id_p, requester_id_p, "accepted", CURRENT_DATE);
-	ELSE
-		SIGNAL SQLSTATE "45000"
-		SET MESSAGE_TEXT="Unable to add friend";
-	END IF;
-END $$
-DELIMITER ;
+-- CALL accept_friend_request(51, 1);
+-- SELECT * FROM user_to_user WHERE id1 = 51;
+-- SELECT * FROM user_to_user WHERE id2 = 51;
 
-CALL accept_friend_request(51, 1);
-SELECT * FROM user_to_user WHERE id1 = 51;
-SELECT * FROM user_to_user WHERE id2 = 51;
+-- INSERT INTO user(email, username, password_hash, first_name, last_name) VALUES ("pham.har@email", "pham-har", "root1234", "Harrison", "Pham");
+-- CALL insert_podcast_review(51, 1, 5, NULL);
+-- CALL insert_podcast_review(51, 4, 2, NULL);
+-- SELECT * FROM podcast_review WHERE user_id = 51;
 
 
+-- CALL update_podcast_review(51, 1, 4, "Not as good as I remember");
+-- SELECT * FROM podcast_review WHERE user_id = 51;
 
-/*
-Insert podcast review
-*/
-DELIMITER $$
-DROP PROCEDURE IF EXISTS insert_podcast_review $$
-CREATE PROCEDURE insert_podcast_review(IN user_id_p INT, IN podcast_id_p INT, IN rating_p INT, IN text_p VARCHAR(255))
-BEGIN
-    INSERT INTO podcast_review (user_id, podcast_id, rating, text) 
-    VALUES (user_id_p, podcast_id_p, rating_p, text_p);
-END $$
-DELIMITER ;
+-- CALL insert_episode_review(51, 1, 1169, 5, "Amazing");
+-- SELECT * FROM episode_review WHERE user_id = 51;
 
-INSERT INTO user(email, username, password_hash, first_name, last_name) VALUES ("pham.har@email", "pham-har", "root1234", "Harrison", "Pham");
-CALL insert_podcast_review(51, 1, 5, NULL);
-CALL insert_podcast_review(51, 4, 2, NULL);
-SELECT * FROM podcast_review WHERE user_id = 51;
-
-
-
-/*
-Update podcast review
-*/
-DELIMITER $$
-DROP PROCEDURE IF EXISTS update_podcast_review $$
-CREATE PROCEDURE update_podcast_review(IN user_id_p INT, IN podcast_id_p INT, IN rating_p INT, IN text_p VARCHAR(255))
-BEGIN
-    UPDATE podcast_review
-    SET rating = rating_p, text = text_p
-    WHERE user_id = user_id_p AND podcast_id = podcast_id_p;
-END $$
-DELIMITER ;
-
-CALL update_podcast_review(51, 1, 4, "Not as good as I remember");
-SELECT * FROM podcast_review WHERE user_id = 51;
-
-
-
-/*
-Insert episode review
-*/
-DELIMITER $$
-DROP PROCEDURE IF EXISTS insert_episode_review $$
-CREATE PROCEDURE insert_episode_review(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT, IN rating_p INT, IN text_p VARCHAR(255))
-BEGIN
-    INSERT INTO episode_review (user_id, podcast_id, episode_num, rating, text) 
-    VALUES (user_id_p, podcast_id_p, episode_num_p, rating_p, text_p);
-END $$
-DELIMITER ;
-
-CALL insert_episode_review(51, 1, 1169, 5, "Amazing");
-SELECT * FROM episode_review WHERE user_id = 51;
-
-
-
-/*
-Update episode review
-*/
-DELIMITER $$
-DROP PROCEDURE IF EXISTS update_episode_review $$
-CREATE PROCEDURE update_episode_review(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT, IN rating_p INT, IN text_p VARCHAR(255))
-BEGIN
-    UPDATE episode_review
-    SET rating = rating_p, text = text_p
-    WHERE user_id = user_id_p AND podcast_id = podcast_id_p AND episode_num = episode_num_p;
-END $$
-DELIMITER ;
-
-CALL update_episode_review(51, 1, 1169, 2, "Boring");
-SELECT * FROM episode_review WHERE user_id = 51;
+-- CALL update_episode_review(51, 1, 1169, 2, "Boring");
+-- SELECT * FROM episode_review WHERE user_id = 51;
 
 
 
@@ -568,16 +463,148 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL search_episodes
-(
-    1, -- podcast_id_p INT,
-    NULL,
-	NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-);
 
-SELECT * FROM episode where podcast_id = 1;
+
+/*
+Send friend request
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS send_friend_request $$
+CREATE PROCEDURE send_friend_request(IN user_id_p INT, IN user_to_request_id_p INT)
+BEGIN
+	IF user_id_p = user_to_request_id_p THEN
+		SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT = "Cannot send friend request to yourself";
+	END IF;
+    
+	IF EXISTS (SELECT * FROM user_to_user 
+			   WHERE (id1 = user_id_p AND id2 = user_to_request_id_p)
+			       OR (id1 = user_to_request_id_p AND id2 = user_id_p)) THEN
+		SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT = "Friend request or friendship already exists";
+	END IF;
+    
+    INSERT INTO user_to_user (id1, id2, status)
+    VALUES (user_id_p, user_to_request_id_p, "pending");
+END $$
+DELIMITER ;
+
+
+
+/*
+Accept a friend request
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS accept_friend_request $$
+CREATE PROCEDURE accept_friend_request(IN user_id_p INT, IN user_to_accept_id_p INT)
+BEGIN
+	IF EXISTS (
+		SELECT * FROM user_to_user
+        WHERE id1 = user_to_accept_id_p AND id2 = user_id_p
+	) THEN
+		UPDATE user_to_user
+        SET status = "accepted", date_added = CURRENT_DATE
+        WHERE id1 = user_to_accept_id_p AND id2 = user_id_p;
+        
+        INSERT INTO user_to_user (id1, id2, status, date_added)
+        VALUES (user_id_p, user_to_accept_id_p, "accepted", CURRENT_DATE);
+	ELSE
+		SIGNAL SQLSTATE "45000"
+		SET MESSAGE_TEXT="Unable to add friend";
+	END IF;
+END $$
+DELIMITER ;
+
+
+/*
+Insert podcast review
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS insert_podcast_review $$
+CREATE PROCEDURE insert_podcast_review(IN user_id_p INT, IN podcast_id_p INT, IN rating_p INT, IN text_p VARCHAR(255))
+BEGIN
+    IF NOT EXISTS (SELECT * FROM podcast WHERE podcast_id = podcast_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT="Podcast not found";
+    ELSEIF NOT EXISTS (SELECT * FROM user WHERE id = user_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT="User not found";
+    END IF;
+    
+    INSERT INTO podcast_review (user_id, podcast_id, rating, text) 
+    VALUES (user_id_p, podcast_id_p, rating_p, text_p);
+END $$
+DELIMITER ;
+
+
+
+/*
+Update podcast review
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS update_podcast_review $$
+CREATE PROCEDURE update_podcast_review(IN user_id_p INT, IN podcast_id_p INT, IN rating_p INT, IN text_p VARCHAR(255))
+BEGIN
+    IF NOT EXISTS (SELECT * FROM podcast WHERE podcast_id = podcast_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT="Podcast not found";
+    ELSEIF NOT EXISTS (SELECT * FROM user WHERE id = user_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT="User not found";
+    END IF;
+
+    UPDATE podcast_review
+    SET rating = rating_p, text = text_p
+    WHERE user_id = user_id_p AND podcast_id = podcast_id_p;
+END $$
+DELIMITER ;
+
+
+
+/*
+Insert episode review
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS insert_episode_review $$
+CREATE PROCEDURE insert_episode_review(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT, IN rating_p INT, IN text_p VARCHAR(255))
+BEGIN
+    IF NOT EXISTS (SELECT * FROM podcast WHERE podcast_id = podcast_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT="Podcast not found";
+    ELSEIF NOT EXISTS (SELECT * FROM episode WHERE podcast_id = podcast_id_p AND episode_num = episode_num_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT="Episode not found";
+    ELSEIF NOT EXISTS (SELECT * FROM user WHERE id = user_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT="User not found";
+    END IF;
+
+    INSERT INTO episode_review (user_id, podcast_id, episode_num, rating, text) 
+    VALUES (user_id_p, podcast_id_p, episode_num_p, rating_p, text_p);
+END $$
+DELIMITER ;
+
+
+/*
+Update episode review
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS update_episode_review $$
+CREATE PROCEDURE update_episode_review(IN user_id_p INT, IN podcast_id_p INT, IN episode_num_p INT, IN rating_p INT, IN text_p VARCHAR(255))
+BEGIN
+    IF NOT EXISTS (SELECT * FROM podcast WHERE podcast_id = podcast_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT="Podcast not found";
+    ELSEIF NOT EXISTS (SELECT * FROM episode WHERE podcast_id = podcast_id_p AND episode_num = episode_num_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT="Episode not found";
+    ELSEIF NOT EXISTS (SELECT * FROM user WHERE id = user_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT="User not found";
+    END IF;
+
+    UPDATE episode_review
+    SET rating = rating_p, text = text_p
+    WHERE user_id = user_id_p AND podcast_id = podcast_id_p AND episode_num = episode_num_p;
+END $$
+DELIMITER ;
