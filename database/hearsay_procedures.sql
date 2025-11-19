@@ -596,8 +596,8 @@ BEGIN
 END $$
 DELIMITER ;
 
-SELECT * FROM episode_review WHERE podcast_id = 2;
-SELECT get_global_podcast_avg_rating_by_episode(2);
+-- SELECT * FROM episode_review WHERE podcast_id = 2;
+-- SELECT get_global_podcast_avg_rating_by_episode(2);
 
 /*
 Get the user's friends' average rating of a podcast
