@@ -66,7 +66,7 @@ BEGIN
         SET MESSAGE_TEXT="User not found";
 	END IF;
     
-	SELECT * FROM user WHERE id = user_id_p;
+	SELECT id, username, first_name, last_name, bio FROM user WHERE id = user_id_p;
 END $$
 DELIMITER ;
 
@@ -79,11 +79,11 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS get_user_by_username $$
 CREATE PROCEDURE get_user_by_username(IN username_p VARCHAR(32))
 BEGIN
-    IF NOT EXISTS (SELECT * FROM user WHERE username = username_p) THEN
+    IF NOT EXISTS (SELECT * FROM user WHERE username LIKE CONCAT("%", username_p, "%")) THEN
 		SIGNAL SQLSTATE "45000"
-        SET MESSAGE_TEXT="User not found";
+        SET MESSAGE_TEXT="No users found";
 	END IF; 
-	SELECT * FROM user WHERE username = username_p;
+	SELECT id, username, first_name, last_name, bio FROM user WHERE username LIKE CONCAT("%", username_p, "%");
 END $$
 DELIMITER ;
 
@@ -206,7 +206,7 @@ BEGIN
 		SIGNAL SQLSTATE "45000"
         SET MESSAGE_TEXT="User not found";
 	END IF;
-    SELECT * FROM user_to_user
+    SELECT id, date_added, username, first_name, last_name, bio FROM user_to_user
     JOIN user ON id2 = user.id
     WHERE id1 = user_id_p AND status = "accepted";
 END $$
