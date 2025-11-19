@@ -11,7 +11,7 @@ class Review(BaseModel):
     comment: str
 
 router = APIRouter(prefix="/podcasts")
-router.include_router(episodes_router, prefix="/{podcast_id}/playlists")
+router.include_router(episodes_router, prefix="/{podcast_id}/episodes")
 router.include_router(reviews_router, prefix="/{podcast_id}/reviews")
 
 # Search for a podcast 
