@@ -93,7 +93,7 @@ async def getUser(user_id):
         )
 
         cursor = connection.cursor()
-        cursor.callproc("get_user", (user_id,))
+        cursor.callproc("get_user_by_id", (user_id,))
         user_info = cursor.fetchone()
         if not user_info:
             raise HTTPException(status_code=404, detail=f"User not found")
