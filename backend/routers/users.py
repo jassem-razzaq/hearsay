@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 from ..db import db_cursor
-from .users_playlists import router as playlist_router
+from .playlists import router as playlist_router
 import pymysql
 import bcrypt
 

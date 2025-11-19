@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from typing import Optional
 from ..db import db_cursor
+from pydantic import BaseModel
 import pymysql
 
 router = APIRouter()
