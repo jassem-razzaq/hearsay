@@ -155,7 +155,17 @@ async def searchPodcasts(
 ):
     try:
         with db_cursor() as cursor:
-            cursor.callproc("search_podcasts", (name, genre, language, platform, host, guest, year))
+            host_first_name, host_last_name = None, None
+            if host:
+                host_name_parts = host.split()
+                host_first_name, host_last_name = host_name_parts[0], host_name_parts[1]
+
+            guest_first_name, guest_last_name = None, None
+            if guest:
+                guest_name_parts = guest.split()
+                guest_first_name, guest_last_name = guest_name_parts[0], guest_name_parts[1]
+                
+            cursor.callproc("search_podcasts", (name, genre, language, platform, host_first_name, host_last_name, guest_first_name, guest_last_name, year))
             filtered_podcasts = cursor.fetchall()
             return {"podcasts": filtered_podcasts}
     except pymysql.err.OperationalError as e:
@@ -197,8 +207,19 @@ async def searchPodcastEpisodes(
     year: Optional[int] = None
 ):
     try:
+        host_first_name, host_last_name = None, None
+        if host:
+            host_name_parts = host.split()
+            host_first_name, host_last_name = host_name_parts[0], host_name_parts[1]
+
+        guest_first_name, guest_last_name = None, None
+        if guest:
+            guest_name_parts = guest.split()
+            guest_first_name, guest_last_name = guest_name_parts[0], guest_name_parts[1]
+
+        
         with db_cursor() as cursor:
-            cursor.callproc("search_episodes", (podcast_id, num, name, host, guest, year))
+            cursor.callproc("search_episodes", (podcast_id, num, name, host_first_name, host_last_name, guest_first_name, guest_last_name, year))
             filtered_episodes = cursor.fetchall()
             return {"episodes": filtered_episodes}
     except pymysql.err.OperationalError as e:
