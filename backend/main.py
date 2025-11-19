@@ -9,7 +9,7 @@ app = FastAPI()
 
 HOST = "localhost"
 DB_USER = "root"
-DB_PASSWORD = "your_new_password"
+DB_PASSWORD = "root1234"
 DATABASE = "hearsay_db"
 
 class UserCreate(BaseModel):
@@ -56,17 +56,9 @@ async def root():
 
 # Create user account
 @app.post("/users", status_code=201)
-async def createUser(data: UserCreate): # Check if email is already registered
+async def createUser(data: UserCreate):
     try:
         with db_cursor() as cursor:
-            cursor.execute("SELECT id FROM user WHERE email=%s", (data.email,))
-            if cursor.fetchone():
-                raise HTTPException(status_code=400, detail=f"Email {data.email} is already registered")
-
-            cursor.execute("SELECT id FROM user WHERE username=%s", (data.username,))
-            if cursor.fetchone():
-                raise HTTPException(status_code=400, detail=f"Username {data.username} is already taken")
-
             hashed_password = bcrypt.hashpw(data.password.encode("utf-8"), bcrypt.gensalt())
             cursor.callproc("create_user", (data.email, data.username, hashed_password, data.firstName, data.lastName))
             return {"userCreated": True, "message": f"User {data.username} created successfully"}
@@ -79,11 +71,8 @@ async def createUser(data: UserCreate): # Check if email is already registered
 async def logInUser(data: UserLogin):
     try:
         with db_cursor() as cursor:
-            cursor.execute("SELECT * FROM user WHERE username=%s", (data.username,))
+            cursor.callproc("get_user_log_in_details", (data.username,))
             user_info = cursor.fetchone()
-
-            if not user_info:
-                raise HTTPException(status_code=404, detail=f"User not found")
             
             password = data.password.encode("utf-8")
             stored_password = user_info["password_hash"].encode("utf-8")
@@ -91,7 +80,7 @@ async def logInUser(data: UserLogin):
             if bcrypt.checkpw(password, stored_password):
                 return {"user_id": user_info["id"], "logged_in": True}
             else:
-                raise HTTPException(status_code=401, detail="Incorrect password")
+                raise HTTPException(status_code=400, detail="Invalid username and/or password")
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
@@ -114,7 +103,7 @@ async def getUserByUsername(user_name: str):
     try:
         with db_cursor() as cursor:
             cursor.callproc("get_user_by_username", (user_name,))
-            user_info = cursor.fetchone()
+            user_info = cursor.fetchall()
             return {"user_info": user_info}
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
@@ -125,12 +114,7 @@ async def getUserByUsername(user_name: str):
 async def updateBio(user_id: int, data: UserBio):
     try:
         with db_cursor() as cursor:
-            cursor.execute("SELECT * FROM user WHERE id=%s", (user_id,))
-            if not cursor.fetchone():
-                raise HTTPException(status_code=404, detail=f"User not found")
-            
             cursor.callproc("update_bio", (user_id, data.bio))
-
             return {"bioUpdated": True, "message": "User bio updated successfully", "bio": data.bio}
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
@@ -141,10 +125,6 @@ async def updateBio(user_id: int, data: UserBio):
 async def getUserFriends(user_id: int):
     try:
         with db_cursor() as cursor:
-            cursor.execute("SELECT * FROM user WHERE id=%s", (user_id,))
-            if not cursor.fetchone():
-                raise HTTPException(status_code=404, detail=f"User not found")
-            
             cursor.callproc("get_friends", (user_id,))
             user_friends = cursor.fetchall()
             return {"user_friends": user_friends}
@@ -152,8 +132,15 @@ async def getUserFriends(user_id: int):
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
 
-@app.delete("/users/{user_id}/friends/{friend_id}")
-### Fill out later ###
+@app.delete("/users/{user_id}/friends/{user_to_delete_id}")
+async def deleteFriend(user_id: int, user_to_delete_id: int):
+    try:
+        with db_cursor() as cursor:
+            cursor.callproc("delete_friend", (user_id, user_to_delete_id))
+            return {"friendDeleted": True}
+    except pymysql.err.OperationalError as e:
+        error_code, message = e.args
+        raise HTTPException(status_code=400, detail=message)
 
 # Search for a podcast 
 @app.get("/podcasts")
