@@ -83,7 +83,7 @@ BEGIN
 		SIGNAL SQLSTATE "45000"
         SET MESSAGE_TEXT="No users found";
 	END IF; 
-	SELECT id, username, first_name, last_name, bio FROM user WHERE username LIKE CONCAT("%", username_p, "%");
+	SELECT id, username, email, first_name, last_name, bio FROM user WHERE username LIKE CONCAT("%", username_p, "%");
 END $$
 DELIMITER ;
 
