@@ -11,9 +11,9 @@ import bcrypt
 
 JWT_SECRET = "sIxSeVeNsIxSeVeNsIxSeVeN"
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRE_MINUTES = 60
+JWT_EXPIRE_MINUTES = 120
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 router = APIRouter(prefix="/users")
 router.include_router(playlist_router, prefix="/{user_id}/playlists")
 
@@ -77,31 +77,26 @@ def decode_access_token(token: str) -> dict:
         )
 
 # Get current user
-def getCurrentUser(token: str = Depends(oauth2_scheme)) -> UserPublic:
+async def getCurrentUser(token: str = Depends(oauth2_scheme)):
     payload = decode_access_token(token)
-    username: str = payload.get("sub")
-    if username is None:
+    user_id: int = int(payload.get("sub"))
+    if user_id is None:
         raise HTTPException(
             status_code=400,
             detail="Token payload missing subject",
         )
-    user_row = getUserByUsername(username)
-    if not user_row:
-        raise HTTPException(
-            status_code=400, detail="User not found"
-        )
-
-    return UserPublic(
-        id=user_row["id"],
-        email=user_row["email"],
-        username=user_row["username"],
-        firstName=user_row["first_name"],
-        lastName=user_row["last_name"]
-    )
+    try:
+        with db_cursor() as cursor:
+            stmt = "CALL get_user_by_id(%s)"
+            cursor.execute(stmt, (user_id,))
+    except pymysql.MySQLError as e:
+        print("SQL Error:", e.args)
+        raise HTTPException(status_code=400, detail="Database error")
+    return user_id
 
 # Create user account
-@router.post("/", status_code=201)
-def createUser(data: UserCreate):
+@router.post("/register")
+async def createUser(data: UserCreate):
     try:
         with db_cursor() as cursor:
             hashed_password = bcrypt.hashpw(data.password.encode("utf-8"), bcrypt.gensalt())
@@ -112,53 +107,24 @@ def createUser(data: UserCreate):
         print("Operation error: ", error_code, message)
         raise HTTPException(status_code=400, detail="Error in create user")
 
-# Register a new user
-@router.post("/register", response_model=UserPublic, status_code=201)
-async def signup(user: UserCreate):
-    user_id = createUser(user)
-    created = getUserByUsername(user.username)
-    print("DEBUG created:", created, "keys:", created.keys())
-    return UserPublic(
-        id=created["id"],
-        email=created["email"],
-        username=created["username"],
-        firstName=created["first_name"],
-        lastName=created["last_name"]
-    )
-
 # Login a registered user
 @router.post("/login", response_model=Token)
-async def logInUser(data: OAuth2PasswordRequestForm = Depends()):
+async def logInUser(data: UserLogin):
     try:
         with db_cursor() as cursor:
-            db_user = getUserByUsername(data.username)
-            if not db_cursor:
-                raise HTTPException(status_code=400, detail="Invalid username and/or password")
-            if not verify_password(data.password, data["password_hash"]):
-                raise HTTPException(status_code=400, detail="Invalid username and/or password")
-            
-            access_token = create_access_token(data={"sub": db_user["username"]})
-            return Token(access_token=access_token)
-            """
             cursor.callproc("get_user_log_in_details", (data.username,))
-            user_info = cursor.fetchone()
-            
-            password = data.password.encode("utf-8")
-            stored_password = user_info["password_hash"].encode("utf-8")
-
-            if bcrypt.checkpw(password, stored_password):
-                return {"user_id": user_info["id"], "logged_in": True}
-            else:
+            db_user = cursor.fetchone()
+            if not db_user:
                 raise HTTPException(status_code=400, detail="Invalid username and/or password")
-            """
+            if not verify_password(data.password, db_user["password_hash"]):
+                raise HTTPException(status_code=400, detail="Invalid username and/or password")
+            user_id = str(db_user["id"])
+            print (user_id, type(user_id))
+            access_token = create_access_token(data={"sub": str(db_user["id"])})
+            return Token(access_token=access_token)
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
-        raise HTTPException(status_code=400, detail=message)
-
-# test endpoint
-@router.get("/me", response_model=UserPublic)
-async def read_me(current_user: UserPublic = Depends(getCurrentUser)):
-    return current_user
+        raise HTTPException(status_code=400, detail="Login operational error")
 
 # Get all user details
 @router.get("/{user_id}")
@@ -171,10 +137,10 @@ async def getUser(user_id: int):
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
-
+    
 # Get user by username
 @router.get("/username/{user_name}")
-def getUserByUsername(user_name: str):
+async def getUserByUsername(user_name: str):
     try:
         with db_cursor() as cursor:
             cursor.callproc("get_user_by_username", (user_name,))
@@ -186,7 +152,9 @@ def getUserByUsername(user_name: str):
 
 # Update user bio
 @router.put("/{user_id}")
-async def updateBio(user_id: int, data: UserBio):
+async def updateBio(user_id: int, data: UserBio, current_user: int = Depends(getCurrentUser)):
+    if (current_user != user_id): 
+        raise HTTPException(status_code=400, detail="Unauthorized to make changes to user")
     try:
         with db_cursor() as cursor:
             cursor.callproc("update_bio", (user_id, data.bio))
@@ -209,7 +177,9 @@ async def getUserFriends(user_id: int):
 
 # Delete a user's friends
 @router.delete("/{user_id}/friends/{user_to_delete_id}")
-async def deleteFriend(user_id: int, user_to_delete_id: int):
+async def deleteFriend(user_id: int, user_to_delete_id: int, current_user: int = Depends(getCurrentUser)):
+    if (current_user != user_id): 
+        raise HTTPException(status_code=400, detail="Unauthorized to make changes to user")
     try:
         with db_cursor() as cursor:
             cursor.callproc("delete_friend", (user_id, user_to_delete_id))
