@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import microphoneIcon from "../assets/microphone.png";
 
 type SearchType = "podcasts" | "users";
 
-type PodcastFilters = {
+type SearchFilters = {
+  name: string;
   genre: string;
   language: string;
   platform: string;
@@ -12,20 +14,20 @@ type PodcastFilters = {
   guest: string;
 };
 
+const API_URL_BASE = import.meta.env.VITE_API_URL;
+
 export default function NavBar() {
   const [searchType, setSearchType] = useState<SearchType>("podcasts");
-  const [searchInput, setSearchInput] = useState<string>("");
   const [showFilters, setShowFilters] = useState(false);
   const [genres, setGenres] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [hosts, setHosts] = useState<string[]>([]);
   const [guests, setGuests] = useState<string[]>([]);
-  const [hostSearch, setHostSearch] = useState<string>("");
   const [filteredHosts, setFilteredHosts] = useState<string[]>([]);
-  const [guestSearch, setGuestSearch] = useState<string>("");
   const [filteredGuests, setFilteredGuests] = useState<string[]>([]);
-  const [podcastFilters, setPodcastFilters] = useState<PodcastFilters>({
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
+    name: "",
     genre: "",
     language: "",
     platform: "",
@@ -33,11 +35,12 @@ export default function NavBar() {
     host: "",
     guest: "",
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadFilters() {
       try {
-        const response: Response = await fetch("http://127.0.0.1:8000/podcasts/filters");
+        const response: Response = await fetch(`${API_URL_BASE}/podcasts/filters`);
         const data = await response.json();
         setGenres(data.genres);
         setLanguages(data.languages);
@@ -53,9 +56,29 @@ export default function NavBar() {
     loadFilters();
   }, []);
 
+  async function handleSearch() {
+    const params = new URLSearchParams();
+    params.append("type", searchType);
+
+    if (searchType === "podcasts") {
+      Object.entries(searchFilters).forEach(([filter, value]) => {
+        if (value) {
+          params.append(filter, value);
+        }
+      });
+    } else {
+      params.append("name", searchFilters.name);
+    }
+    navigate(`/results?${params.toString()}`);
+  }
+
+  function handleReset() {
+    setSearchFilters({ name: "", genre: "", language: "", platform: "", year: "", host: "", guest: "" });
+  }
+
   function handleHostSearch(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
-    setHostSearch(value);
+    searchFilters.host = value;
 
     if (value.trim() === "") {
       setFilteredHosts([]);
@@ -66,7 +89,7 @@ export default function NavBar() {
 
   function handleGuestSearch(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
-    setGuestSearch(value);
+    searchFilters.guest = value;
 
     if (value.trim() === "") {
       setFilteredGuests([]);
@@ -77,8 +100,10 @@ export default function NavBar() {
 
   return (
     <div className="flex bg-yellow-100 h-16 sticky top-0 left-0 justify-between items-center pr-3">
-      <img src={microphoneIcon} className="w-15 h-14.5" />
-      <button className="border">test</button>
+      <img src={microphoneIcon} className="w-15 h-14.5" onClick={() => navigate("/")} />
+      <button className="border" onClick={handleSearch}>
+        test
+      </button>
       <div>
         <select value={searchType} onChange={(e) => setSearchType(e.target.value as SearchType)}>
           <option value="podcasts">Podcasts</option>
@@ -88,23 +113,33 @@ export default function NavBar() {
           className="w-100 h-7 px-2"
           type="search"
           placeholder={`Search ${searchType} ${searchType === "users" ? "by username" : ""}`}
+          value={searchFilters.name}
+          onChange={(e) => setSearchFilters({ ...searchFilters, name: e.target.value })}
         />
 
-        <button onClick={() => setShowFilters(!showFilters)}>filters</button>
+        <button disabled={searchType === "users"} onClick={() => setShowFilters(!showFilters)}>
+          filters
+        </button>
         <div className="relative">
           {showFilters && (
             <div className="absolute bg-cyan-100">
               <label>Genre</label>
-              <select onChange={(e) => setPodcastFilters({ ...podcastFilters, genre: e.target.value })}>
+              <select
+                value={searchFilters.genre}
+                onChange={(e) => setSearchFilters({ ...searchFilters, genre: e.target.value })}
+              >
                 <option value="">Any</option>
                 {genres.map((genre) => (
-                  <option key={genre} value={podcastFilters.genre}>
+                  <option key={genre} value={genre}>
                     {genre}
                   </option>
                 ))}
               </select>
               <label>Language</label>
-              <select onChange={(e) => setPodcastFilters({ ...podcastFilters, language: e.target.value })}>
+              <select
+                value={searchFilters.language}
+                onChange={(e) => setSearchFilters({ ...searchFilters, language: e.target.value })}
+              >
                 <option value="">Any</option>
                 {languages.map((language) => (
                   <option key={language} value={language}>
@@ -113,7 +148,10 @@ export default function NavBar() {
                 ))}
               </select>
               <label>Platform</label>
-              <select onChange={(e) => setPodcastFilters({ ...podcastFilters, platform: e.target.value })}>
+              <select
+                value={searchFilters.platform}
+                onChange={(e) => setSearchFilters({ ...searchFilters, platform: e.target.value })}
+              >
                 <option value="">Any</option>
                 {platforms.map((platform) => (
                   <option key={platform} value={platform}>
@@ -126,18 +164,23 @@ export default function NavBar() {
                 type="number"
                 min={0}
                 max={9999}
-                onChange={(e) => setPodcastFilters({ ...podcastFilters, genre: e.target.value })}
+                value={searchFilters.year}
+                onChange={(e) => setSearchFilters({ ...searchFilters, year: e.target.value })}
               />
               <label>Host</label>
-              <input type="text" value={hostSearch} onChange={handleHostSearch} placeholder="Search for a host" />
-              {hostSearch && (
+              <input
+                type="text"
+                value={searchFilters.host}
+                onChange={handleHostSearch}
+                placeholder="Search for a host"
+              />
+              {searchFilters.host && (
                 <ul>
                   {filteredHosts.slice(0, 3).map((host) => (
                     <li
                       key={host}
                       onClick={() => {
-                        setPodcastFilters({ ...podcastFilters, host: host });
-                        setHostSearch(host);
+                        setSearchFilters({ ...searchFilters, host: host });
                         setFilteredHosts([]);
                       }}
                     >
@@ -147,15 +190,19 @@ export default function NavBar() {
                 </ul>
               )}
               <label>Guest</label>
-              <input type="text" value={guestSearch} onChange={handleGuestSearch} placeholder="Search for a guest" />
-              {guestSearch && (
+              <input
+                type="text"
+                value={searchFilters.guest}
+                onChange={handleGuestSearch}
+                placeholder="Search for a guest"
+              />
+              {searchFilters.guest && (
                 <ul>
                   {filteredGuests.slice(0, 3).map((guest) => (
                     <li
                       key={guest}
                       onClick={() => {
-                        setPodcastFilters({ ...podcastFilters, guest: guest });
-                        setGuestSearch(guest);
+                        setSearchFilters({ ...searchFilters, guest: guest });
                         setFilteredGuests([]);
                       }}
                     >
@@ -164,6 +211,7 @@ export default function NavBar() {
                   ))}
                 </ul>
               )}
+              <button onClick={handleReset}>Reset</button>
             </div>
           )}
         </div>
