@@ -102,7 +102,7 @@ export default function NavBar() {
     <div className="flex bg-yellow-100 h-16 sticky top-0 left-0 justify-between items-center pr-3">
       <img src={microphoneIcon} className="w-15 h-14.5" onClick={() => navigate("/")} />
       <button className="border" onClick={handleSearch}>
-        test
+        Search
       </button>
       <div>
         <select value={searchType} onChange={(e) => setSearchType(e.target.value as SearchType)}>
@@ -118,7 +118,7 @@ export default function NavBar() {
         />
 
         <button disabled={searchType === "users"} onClick={() => setShowFilters(!showFilters)}>
-          filters
+          Filters
         </button>
         <div className="relative">
           {showFilters && (

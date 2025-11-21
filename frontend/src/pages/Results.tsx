@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import PodcastCard from "../components/PodcastCard";
+import UserCard from "../components/UserCard";
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
 type PodcastResults = {
@@ -62,6 +63,17 @@ export default function Results() {
             description={podcast.description}
             release_date={podcast.release_date}
             genres={podcast.genres}
+          />
+        ))}
+      {searchType === "users" &&
+        (results as UserResults[]).map((user) => (
+          <UserCard
+            key={user.id}
+            id={user.id}
+            username={user.username}
+            first_name={user.first_name}
+            last_name={user.last_name}
+            bio={user.bio}
           />
         ))}
     </div>
