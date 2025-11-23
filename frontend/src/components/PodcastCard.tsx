@@ -4,8 +4,20 @@ type PodcastCardProps = {
   description: string;
   release_date: string;
   genres: string;
+  onClick: () => void;
 };
 
-export default function PodcastCard({ podcast_id, name, description, release_date, genres }: PodcastCardProps) {
-  return <div className="bg-green-300">{name}</div>;
+export default function PodcastCard({
+  podcast_id,
+  name,
+  description,
+  release_date,
+  genres,
+  onClick,
+}: PodcastCardProps) {
+  return (
+    <div className="bg-green-300 cursor-pointer" onClick={onClick}>
+      {name}
+    </div>
+  );
 }
