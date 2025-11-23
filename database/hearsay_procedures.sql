@@ -215,6 +215,27 @@ DELIMITER ;
 -- CALL get_friends(1);
 -- CALL get_friends(51);
 
+/*
+Get user friends' reviews
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_user_friends_reviews $$
+CREATE PROCEDURE get_user_friends_reviews(IN user_id_p INT)
+BEGIN
+    IF NOT EXISTS (SELECT * FROM user WHERE id = user_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT = "User not found";
+    END IF;
+    
+    SELECT user_id, username, first_name, last_name, podcast_id, episode_num, rating, comment, created_at FROM user_to_user 
+    JOIN episode_review ON id2 = episode_review.user_id
+    JOIN user ON id2 = id
+    WHERE id1 = user_id_p AND status = "accepted";
+END $$
+DELIMITER ;
+
+CALL get_user_friends_reviews(1);
+
 -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
 PODCAST PROCEDURES
@@ -378,6 +399,45 @@ DELIMITER ;
 -- );
 
 -- SELECT * FROM episode WHERE podcast_id = 1;
+
+/*
+Get a podcast
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_podcast $$
+CREATE PROCEDURE get_podcast(IN podcast_id_p INT)
+BEGIN
+    IF NOT EXISTS (SELECT * FROM podcast WHERE podcast_id = podcast_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT = "Podcast not found";
+    END IF;
+    
+    SELECT name, description, release_date FROM podcast WHERE podcast_id = podcast_id_p;
+END $$
+DELIMITER ;
+
+-- CALL get_podcast(5);
+
+/*
+Get a podcast
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_episode $$
+CREATE PROCEDURE get_episode(IN podcast_id_p INT, IN episode_num_p INT)
+BEGIN
+    IF NOT EXISTS (SELECT * FROM podcast WHERE podcast_id = podcast_id_p) THEN
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT = "Podcast not found";
+    ELSEIF NOT EXISTS (SELECT * FROM episode WHERE podcast_id = podcast_id AND episode_num = episode_num_p) THEN 
+        SIGNAL SQLSTATE "45000"
+        SET MESSAGE_TEXT = "Episode not found";
+    END IF;
+    
+    SELECT * FROM episode WHERE podcast_id = podcast_id_p and episode_num = episode_num_p;
+END $$
+DELIMITER ;
+
+CALL get_episode(1, 1555);
 
 -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
