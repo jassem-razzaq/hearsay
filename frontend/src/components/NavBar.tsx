@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import microphoneIcon from "../assets/microphone.png";
 import SearchBar from "./SearchBar";
+import { LoginContext } from "../contexts/LogInContext";
+import { jwtDecode } from "jwt-decode";
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
@@ -23,7 +25,7 @@ type RegisterInfo = {
 export default function NavBar() {
   const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState<activeModal>(null);
-  const [loggedIn, setLoggedIn] = useState<boolean>(false);
+  const { loggedIn, setLoggedIn, setUserID } = useContext(LoginContext);
   const [loginInfo, setLoginInfo] = useState<LoginInfo>({
     username: "",
     password: "",
@@ -36,12 +38,6 @@ export default function NavBar() {
     lastName: "",
   });
 
-  // useEffect(() => {
-  //   const token = localStorage.getItem("jwt");
-  //   if (token) {
-
-  //   }
-  // })
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!areAllFieldsFilled(loginInfo)) {
@@ -61,6 +57,8 @@ export default function NavBar() {
       }
       // console.log(data.access_token);
       localStorage.setItem("jwt", data.access_token);
+      const decodedToken = jwtDecode(data.access_token);
+      if (decodedToken.sub) setUserID(decodedToken.sub);
       setLoggedIn(true);
       setActiveModal(null);
     } catch (error) {
