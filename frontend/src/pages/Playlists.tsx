@@ -10,6 +10,7 @@ type Playlist = {
 };
 
 type Episode = {
+  podcast_id: string;
   podcast_name: string;
   episode_num: string;
 };
@@ -19,6 +20,8 @@ const API_URL_BASE = import.meta.env.VITE_API_URL;
 export default function Playlists() {
   const { loggedIn, userID } = useContext(LoginContext);
   const urlID = useParams().userID;
+  const navigate = useNavigate();
+
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [episodesByPlaylist, setEpisodesByPlaylist] = useState<
     Record<string, Episode[]>
@@ -48,11 +51,6 @@ export default function Playlists() {
     const data = await response.json();
     setEpisodesByPlaylist((prev) => {
       const next = { ...prev, [playlist]: data };
-      console.log("episodes : ", next);
-      for (const key in next) {
-        const val = next[key];
-        console.log(`${key} : ${val[0]["podcast_name"]}`);
-      }
       return next;
     });
   }
@@ -73,17 +71,7 @@ export default function Playlists() {
   function isOpen(playlist: string) {
     return expandedPlaylists.has(playlist);
   }
-  {
-    /* <div key={playlist.name}>
-            <PlaylistCard
-              name={playlist.name}
-              description={playlist.description}
-              onClick={() => {
-                handlePlaylistClick(playlist.name);
-              }}
-            />
-          </div> */
-  }
+
   return (
     <>
       <div>
@@ -102,9 +90,17 @@ export default function Playlists() {
                 (episode) =>
                   isOpen(playlist.name) && (
                     <ul>
-                      <li key={episode.episode_num}>
-                        {episode.podcast_name} : Episode {episode.episode_num}
-                      </li>
+                      <EpisodeCard
+                        key={episode.episode_num}
+                        podcast_id={episode.podcast_id}
+                        podcast_name={episode.podcast_name}
+                        episode_num={episode.episode_num}
+                        onClick={() =>
+                          navigate(
+                            `/podcasts/${episode.podcast_id}/episodes/${episode.episode_num}`
+                          )
+                        }
+                      />
                     </ul>
                   )
               )}
