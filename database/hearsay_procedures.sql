@@ -334,6 +334,8 @@ END $$
 DELIMITER ;
 
 -- CALL get_user_friends_episode_review(1, 1, 1169);
+
+
 -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
 PODCAST PROCEDURES
@@ -537,6 +539,103 @@ DELIMITER ;
 
 -- CALL get_episode(1, 1555);
 
+/*
+Get all genres 
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_all_genres $$
+CREATE PROCEDURE get_all_genres()
+BEGIN
+    SELECT genre_name FROM genre;
+END $$
+DELIMITER ;
+
+-- CALL get_all_genres();
+
+/*
+Get all languages
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_all_languages $$
+CREATE PROCEDURE get_all_languages()
+BEGIN
+    SELECT language_name FROM language;
+END $$
+DELIMITER ;
+
+-- CALL get_all_languages();
+
+
+/*
+Get all platforms
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_all_platforms $$
+CREATE PROCEDURE get_all_platforms()
+BEGIN
+    SELECT platform_name FROM platform;
+END $$
+DELIMITER ;
+
+-- CALL get_all_platforms();
+
+/*
+Get all hosts
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_all_hosts $$
+CREATE PROCEDURE get_all_hosts()
+BEGIN
+    SELECT first_name, last_name FROM host;
+END $$
+DELIMITER ;
+
+-- CALL get_all_hosts();
+
+
+/*
+Get all guests
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_all_guests $$
+CREATE PROCEDURE get_all_guests()
+BEGIN
+    SELECT first_name, last_name FROM guest;
+END $$
+DELIMITER ;
+
+-- CALL get_all_guests();
+
+
+/*
+Get all podcast hosts
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_podcast_hosts $$
+CREATE PROCEDURE get_podcast_hosts(IN podcast_id_p INT)
+BEGIN
+    SELECT DISTINCT first_name, last_name FROM episode_to_host
+    JOIN host USING (host_id)
+    WHERE podcast_id = podcast_id_p;
+END $$
+DELIMITER ;
+
+-- CALL get_podcast_hosts(5);
+
+/*
+Get all podcast guests
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS get_podcast_guests $$
+CREATE PROCEDURE get_podcast_guests(IN podcast_id_p INT)
+BEGIN
+    SELECT DISTINCT first_name, last_name FROM episode_to_guest
+    JOIN guest USING (guest_id)
+    WHERE podcast_id = podcast_id_p;
+END $$
+DELIMITER ;
+
+-- CALL get_podcast_guests(5);
 -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
 PODCAST-REVIEW PROCEDURES
@@ -987,3 +1086,6 @@ END $$
 DELIMITER ;
 
 -- CALL remove_episode_from_playlist(51, 1, 1555, "Real G tunes");
+
+-- SELECT * FROM episode_review;
+-- SELECT * FROM user_to_user WHERE id1 = 1;
