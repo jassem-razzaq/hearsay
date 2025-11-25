@@ -142,7 +142,6 @@ DELIMITER ;
 
 -- CALL send_friend_request(1, 51);
 
-
 /*
 Accept a friend request
 */
@@ -234,7 +233,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL get_user_friends_reviews(1);
+-- CALL get_user_friends_reviews(1);
 
 /*
 Get all friend reviews of a podcast
@@ -292,7 +291,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL get_user_friends_episode_review(1, 1, 1169);
+-- CALL get_user_friends_episode_review(1, 1, 1169);
 -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
 PODCAST PROCEDURES
@@ -494,7 +493,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL get_episode(1, 1555);
+-- CALL get_episode(1, 1555);
 
 -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
