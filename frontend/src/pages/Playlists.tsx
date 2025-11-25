@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import PlaylistCard from "../components/PlaylistCard";
+import { LoginContext } from "../contexts/LoginContext";
 
 type Playlist = {
   name: string;
@@ -14,14 +15,15 @@ type Episode = {
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
 export default function Playlists() {
-  const userID = useParams().userID;
+  const { loggedIn, userID } = useContext(LoginContext);
+  const urlID = useParams().userID;
   const [results, setResults] = useState<Playlist[]>([]);
 
   useEffect(() => {
     async function getUserPlaylists() {
       // Playlist data (Create, Delete playlist, Add Ep, Delete Ep)
       const pl_response: Response = await fetch(
-        `${API_URL_BASE}/users/${userID}/playlists`
+        `${API_URL_BASE}/users/${urlID}/playlists`
       );
       const allPlaylistData = await pl_response.json();
       setResults(allPlaylistData);
@@ -36,7 +38,7 @@ export default function Playlists() {
       return data;
     }
     getUserPlaylists();
-  });
+  }, [loggedIn]);
   return (
     <div>
       {(results as Playlist[]).map((playlist) => (
