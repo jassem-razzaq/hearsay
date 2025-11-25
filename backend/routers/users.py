@@ -259,12 +259,23 @@ async def getUserFeed(user_id: int):
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
     
-# Get a user's latest reviews
-@router.get("/{user_id}/reviews}")
+# Get a user's latest podcast reviews
+@router.get("/{user_id}/reviews/podcasts")
 async def getUserReviews(user_id: int):
     try:
         with db_cursor() as cursor:
-            cursor.callproc("", (,))
+            cursor.callproc("get_user_podcast_reviews", (user_id,))
+            return cursor.fetchall()
+    except pymysql.err.OperationalError as e:
+        error_code, message = e.args
+        raise HTTPException(status_code=400, detail=message)
+    
+# Get a user's latest episode reviews
+@router.get("/{user_id}/reviews/episodes")
+async def getUserReviews(user_id: int):
+    try:
+        with db_cursor() as cursor:
+            cursor.callproc("get_user_episode_reviews", (user_id,))
             return cursor.fetchall()
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
