@@ -6,6 +6,7 @@ type Login = {
   setLoggedIn: (value: boolean) => void;
   userID: string;
   setUserID: (value: string) => void;
+  onLogout: () => void;
 };
 
 export const LoginContext = createContext<Login>({
@@ -13,6 +14,7 @@ export const LoginContext = createContext<Login>({
   setLoggedIn: () => {},
   userID: "",
   setUserID: () => {},
+  onLogout: () => {},
 });
 
 export function LoginProvider({ children }: { children: React.ReactNode }) {
@@ -30,5 +32,15 @@ export function LoginProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  return <LoginContext.Provider value={{ loggedIn, setLoggedIn, userID, setUserID }}>{children}</LoginContext.Provider>;
+  function handleLogout() {
+    localStorage.removeItem("jwt");
+    setLoggedIn(false);
+    setUserID("");
+  }
+
+  return (
+    <LoginContext.Provider value={{ loggedIn, setLoggedIn, userID, setUserID, onLogout: handleLogout }}>
+      {children}
+    </LoginContext.Provider>
+  );
 }

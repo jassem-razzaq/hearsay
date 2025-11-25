@@ -25,7 +25,7 @@ type RegisterInfo = {
 export default function NavBar() {
   const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState<activeModal>(null);
-  const { loggedIn, setLoggedIn, setUserID } = useContext(LoginContext);
+  const { loggedIn, setLoggedIn, setUserID, onLogout } = useContext(LoginContext);
   const [loginInfo, setLoginInfo] = useState<LoginInfo>({
     username: "",
     password: "",
@@ -116,7 +116,7 @@ export default function NavBar() {
           <div>
             <button
               onClick={() => {
-                setLoggedIn(false);
+                onLogout();
               }}
             >
               User
