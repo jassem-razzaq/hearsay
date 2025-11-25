@@ -333,7 +333,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL get_user_friends_episode_review(1, 1, 1169);
+-- CALL get_user_friends_episode_review(1, 1, 1169);
 -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
 PODCAST PROCEDURES
@@ -535,7 +535,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL get_episode(1, 1555);
+-- CALL get_episode(1, 1555);
 
 -- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -933,7 +933,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-CALL get_episodes_in_playlist(1, "Morning Commute");
+-- CALL get_episodes_in_playlist(1, "Morning Commute");
 
 
 /*
