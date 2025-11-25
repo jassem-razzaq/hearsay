@@ -927,12 +927,13 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS get_episodes_in_playlist $$
 CREATE PROCEDURE get_episodes_in_playlist(IN user_id_p INT, IN playlist_name_p VARCHAR(32))
 BEGIN
-    SELECT podcast_id, episode_num FROM episode_to_playlist
-    WHERE user_id = user_id_p AND playlist_name = playlist_name_p;
+    SELECT p.name AS podcast_name, episode_num FROM episode_to_playlist AS etp
+    JOIN podcast AS p ON p.podcast_id = etp.podcast_id
+    WHERE etp.user_id = user_id_p AND playlist_name = playlist_name_p;
 END $$
 DELIMITER ;
 
--- CALL get_episodes_in_playlist(54, "create new playlist");
+CALL get_episodes_in_playlist(1, "Morning Commute");
 
 
 /*
