@@ -70,33 +70,27 @@ async def getFilters():
         with db_cursor() as cursor:
             filters = {}
 
-            cursor.execute("SELECT genre_name from genre;")
+            cursor.callproc("get_all_genres")
             genre_rows = cursor.fetchall()
             genres = [f"{row["genre_name"]}" for row in genre_rows]
             filters["genres"] = genres
 
-            cursor.execute("SELECT language_name from language;")
+            cursor.callproc("get_all_languages")
             language_rows = cursor.fetchall()
             languages = [f"{row["language_name"]}" for row in language_rows]
             filters["languages"] = languages
 
-            cursor.execute("SELECT platform_name from platform;")
+            cursor.callproc("get_all_platforms")
             platform_rows = cursor.fetchall()
             platforms = [f"{row["platform_name"]}" for row in platform_rows]
             filters["platforms"] = platforms
 
-            cursor.execute("SELECT DISTINCT YEAR(release_date) as year from podcast;")
-            year_rows = cursor.fetchall()
-            years = [f"{row["year"]}" for row in year_rows]
-            years.sort(reverse=True)
-            filters["years"] = years
-
-            cursor.execute("SELECT first_name, last_name from host")
+            cursor.callproc("get_all_hosts")
             host_rows = cursor.fetchall()
             hosts = [f"{row['first_name']} {row['last_name']}" for row in host_rows]
             filters["hosts"] = hosts
 
-            cursor.execute("SELECT first_name, last_name from guest")
+            cursor.callproc("get_all_guests")
             guest_rows = cursor.fetchall()
             guests = [f"{row["first_name"]} {row["last_name"]}" for row in guest_rows]
             filters["guests"] = guests
@@ -107,6 +101,7 @@ async def getFilters():
         raise HTTPException(status_code=400, detail=message)
 
 
+# Get info about a podcast
 @router.get("/{podcast_id}")
 async def getPodcast(podcast_id: int):
     try:

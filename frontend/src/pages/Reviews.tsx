@@ -24,16 +24,12 @@ export default function Reviews() {
 
   useEffect(() => {
     async function getUserPodcastReviews() {
-      const response: Response = await fetch(
-        `${API_URL_BASE}/users/${urlID}/reviews/podcasts`
-      );
+      const response: Response = await fetch(`${API_URL_BASE}/users/${urlID}/reviews/podcasts`);
       const data = await response.json();
       setPodcastReviews(data);
     }
     async function getUserEpisodeReviews() {
-      const response: Response = await fetch(
-        `${API_URL_BASE}/users/${urlID}/reviews/episodes`
-      );
+      const response: Response = await fetch(`${API_URL_BASE}/users/${urlID}/reviews/episodes`);
       const data = await response.json();
       setEpisodeReviews(data);
     }
@@ -50,10 +46,11 @@ export default function Reviews() {
             review={{
               type: "podcast",
               username: review.username,
-              podcast_name: review.podcast_name,
+              podcastName: review.podcast_name,
               rating: review.rating,
               comment: review.comment,
-              created_at: review.created_at,
+              createdAt: review.created_at,
+              onClick: () => {},
             }}
           />
         ))}
@@ -66,11 +63,12 @@ export default function Reviews() {
             review={{
               type: "episode",
               username: review.username,
-              podcast_name: review.podcast_name,
-              episode_num: review.episode_num,
+              podcastName: review.podcast_name,
+              episodeNum: review.episode_num,
               rating: review.rating,
               comment: review.comment,
-              created_at: review.created_at,
+              createdAt: review.created_at,
+              onClick: () => {},
             }}
           />
         ))}
