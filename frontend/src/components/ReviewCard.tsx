@@ -1,9 +1,9 @@
 type BaseReviewProps = {
   username: string;
-  podcast_name: string;
+  podcastName: string;
   rating: string;
   comment: string;
-  created_at: string;
+  createdAt: string;
   onClick: () => void;
 };
 
@@ -13,7 +13,7 @@ type PodcastReviewProps = BaseReviewProps & {
 
 type EpisodeReviewProps = BaseReviewProps & {
   type: "episode";
-  episode_num: string;
+  episodeNum: string;
 };
 
 type ReviewCardProps = {
@@ -23,15 +23,15 @@ type ReviewCardProps = {
 export default function ReviewCard({ review }: ReviewCardProps) {
   return (
     <>
-      <div className="bg-green-300 cursor-pointer" onClick={review.onClick}>
-        {review.podcast_name}
-        {review.type === "episode" && review.episode_num}
+      <div className="bg-green-300 cursor-pointer" onClick={() => review.onClick()}>
+        {review.podcastName}
+        {review.type === "episode" && review.episodeNum}
         Rating: {review.rating}
       </div>
       <div>
         {review.username}
         <li>{review.comment}</li>
-        <li>{review.created_at}</li>
+        <li>{review.createdAt}</li>
       </div>
     </>
   );
