@@ -101,6 +101,7 @@ async def getFilters():
         raise HTTPException(status_code=400, detail=message)
 
 
+# Get info about a podcast
 @router.get("/{podcast_id}")
 async def getPodcast(podcast_id: int):
     try:
