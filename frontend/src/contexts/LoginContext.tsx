@@ -6,6 +6,7 @@ type Login = {
   setLoggedIn: (value: boolean) => void;
   userID: string;
   setUserID: (value: string) => void;
+  onLogout: () => void;
   token: string | null;
   setToken: (value: string) => void;
 };
@@ -15,6 +16,7 @@ export const LoginContext = createContext<Login>({
   setLoggedIn: () => {},
   userID: "",
   setUserID: () => {},
+  onLogout: () => {},
   token: null,
   setToken: () => {},
 });
@@ -28,11 +30,7 @@ export function LoginProvider({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem("jwt");
     if (token) {
       const decodedToken = jwtDecode(token);
-      if (
-        decodedToken.exp &&
-        decodedToken.sub &&
-        Date.now() < decodedToken.exp * 1000
-      ) {
+      if (decodedToken.exp && decodedToken.sub && Date.now() < decodedToken.exp * 1000) {
         setUserID(decodedToken.sub);
         setLoggedIn(true);
         setToken(token);
@@ -40,9 +38,15 @@ export function LoginProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  function handleLogout() {
+    localStorage.removeItem("jwt");
+    setLoggedIn(false);
+    setUserID("");
+  }
+
   return (
     <LoginContext.Provider
-      value={{ loggedIn, setLoggedIn, userID, setUserID, token, setToken }}
+      value={{ loggedIn, setLoggedIn, userID, setUserID, onLogout: handleLogout, token, setToken }}
     >
       {children}
     </LoginContext.Provider>

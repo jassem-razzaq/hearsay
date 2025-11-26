@@ -25,8 +25,8 @@ type RegisterInfo = {
 export default function NavBar() {
   const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState<activeModal>(null);
-  const { loggedIn, setLoggedIn, setUserID, setToken } =
-    useContext(LoginContext);
+  const { loggedIn, setLoggedIn, setUserID, onLogout, setToken } = useContext(LoginContext);
+
   const [loginInfo, setLoginInfo] = useState<LoginInfo>({
     username: "",
     password: "",
@@ -56,7 +56,6 @@ export default function NavBar() {
         alert(data.detail);
         return;
       }
-      // console.log(data.access_token);
       localStorage.setItem("jwt", data.access_token);
       const decodedToken = jwtDecode(data.access_token);
       if (decodedToken.sub) setUserID(decodedToken.sub);
@@ -111,18 +110,14 @@ export default function NavBar() {
 
   return (
     <div className="flex bg-yellow-100 h-16 sticky top-0 left-0 justify-between items-center pr-3">
-      <img
-        src={microphoneIcon}
-        className="w-15 h-14.5 cursor-pointer"
-        onClick={() => navigate("/")}
-      />
+      <img src={microphoneIcon} className="w-15 h-14.5 cursor-pointer" onClick={() => navigate("/")} />
       <SearchBar />
       <div className="relative">
         {loggedIn ? (
           <div>
             <button
               onClick={() => {
-                setLoggedIn(false);
+                onLogout();
               }}
             >
               User
@@ -130,19 +125,12 @@ export default function NavBar() {
           </div>
         ) : (
           <div className="flex gap-1">
-            <button
-              className="cursor-pointer"
-              onClick={() =>
-                setActiveModal(activeModal !== "login" ? "login" : null)
-              }
-            >
+            <button className="cursor-pointer" onClick={() => setActiveModal(activeModal !== "login" ? "login" : null)}>
               log in
             </button>
             <button
               className="cursor-pointer"
-              onClick={() =>
-                setActiveModal(activeModal !== "register" ? "register" : null)
-              }
+              onClick={() => setActiveModal(activeModal !== "register" ? "register" : null)}
             >
               register
             </button>
@@ -152,17 +140,13 @@ export default function NavBar() {
                   <label>Username</label>
                   <input
                     type="text"
-                    onChange={(e) =>
-                      setLoginInfo({ ...loginInfo, username: e.target.value })
-                    }
+                    onChange={(e) => setLoginInfo({ ...loginInfo, username: e.target.value })}
                     placeholder="Username"
                   ></input>
                   <label>Password</label>
                   <input
                     type="password"
-                    onChange={(e) =>
-                      setLoginInfo({ ...loginInfo, password: e.target.value })
-                    }
+                    onChange={(e) => setLoginInfo({ ...loginInfo, password: e.target.value })}
                     placeholder="Password"
                   ></input>
                   <button type="submit">Log In</button>
