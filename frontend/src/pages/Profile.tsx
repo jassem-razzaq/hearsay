@@ -35,8 +35,6 @@ export default function Profile() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const urlID = useParams().userID;
 
-  console.log("Papa playlist: ", playlists);
-
   useEffect(() => {
     async function getUserInfo() {
       // Profile data
@@ -118,6 +116,7 @@ export default function Profile() {
       <div>
         <img src={avatar} className="w-48 h-48"></img>
         <h1>{profile.username}</h1>
+        <p>{profile.bio}</p>
       </div>
       <div>Friends list</div>
       <Friends />
