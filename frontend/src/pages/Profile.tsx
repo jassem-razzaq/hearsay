@@ -35,6 +35,8 @@ export default function Profile() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const urlID = useParams().userID;
 
+  console.log("Papa playlist: ", playlists);
+
   useEffect(() => {
     async function getUserInfo() {
       // Profile data
@@ -88,6 +90,29 @@ export default function Profile() {
       console.error("Failed to create playlist", error);
     }
   }
+
+  async function handlePlaylistDelete(playlist: string) {
+    try {
+      const response = await fetch(
+        `${API_URL_BASE}/users/${urlID}/playlists/${playlist}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error("Response from delete playlist not ok");
+      } else {
+        setPlaylists((prev) => prev.filter((pl) => pl.name !== playlistName));
+      }
+    } catch (error) {
+      console.error("Failed to delete playlist", error);
+    }
+  }
+
   return (
     <>
       <div>
@@ -117,7 +142,12 @@ export default function Profile() {
         </button>
       )}
       {displayType === "reviews" && <Reviews />}
-      {displayType === "playlists" && <Playlists playlists={playlists} />}
+      {displayType === "playlists" && (
+        <Playlists
+          playlists={playlists}
+          onPlaylistDelete={handlePlaylistDelete}
+        />
+      )}
       {activeModal === "create" && (
         <div className="bg-yellow-200 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <form className="flex flex-col" onSubmit={handlePlaylistCreate}>
