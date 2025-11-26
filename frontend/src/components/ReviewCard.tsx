@@ -25,7 +25,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
   return (
     <>
       <div
-        className="bg-green-300 cursor-pointer"
+        className="bg-orange-900 cursor-pointer"
         onClick={() => review.onClick()}
       >
         {review.podcastName}
