@@ -28,7 +28,9 @@ export default function PlaylistCard({
             e.stopPropagation();
             onDelete();
           }}
-        ></button>
+        >
+          Delete
+        </button>
       )}
     </div>
   );

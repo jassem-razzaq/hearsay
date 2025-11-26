@@ -30,10 +30,12 @@ export default function Playlists() {
     new Set()
   );
   const [refreshOnDelete, setRefreshOnDelete] = useState(0);
+  const token = localStorage.getItem("jwt");
+  console.log(token);
 
   useEffect(() => {
+    // Playlist data
     async function getUserPlaylists() {
-      // Playlist data (Create, Delete playlist, Add Ep, Delete Ep)
       const response: Response = await fetch(
         `${API_URL_BASE}/users/${urlID}/playlists`
       );
@@ -41,7 +43,7 @@ export default function Playlists() {
       setPlaylists(data);
     }
     getUserPlaylists();
-  }, [urlID, userID, refreshOnDelete]);
+  }, [urlID, loggedIn, userID, refreshOnDelete]);
 
   // Episode data
   async function getEpisodes(playlist: string) {
@@ -76,6 +78,7 @@ export default function Playlists() {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
