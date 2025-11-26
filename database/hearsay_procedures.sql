@@ -170,6 +170,28 @@ DELIMITER ;
 -- CALL accept_friend_request(1, 51);
 
 /*
+Reject a friend request
+*/
+DELIMITER $$
+DROP PROCEDURE IF EXISTS reject_friend_request $$
+CREATE PROCEDURE reject_friend_request(IN user_id_p INT, IN user_to_reject_id_p INT)
+BEGIN
+	IF EXISTS (
+		SELECT * FROM user_to_user
+        WHERE id1 = user_to_reject_id_p AND id2 = user_id_p
+	) THEN
+		DELETE FROM user_to_user WHERE id1 = user_to_reject_id_p AND id2 = user_id_p;
+	ELSE
+		SIGNAL SQLSTATE "45000"
+		SET MESSAGE_TEXT="Unable to add friend";
+	END IF;
+END $$
+DELIMITER ;
+
+-- CALL reject_friend_request(51, 1);
+-- CALL reject_friend_request(1, 51);
+
+/*
 Delete friend
 */
 DELIMITER $$
@@ -225,13 +247,13 @@ BEGIN
 		SIGNAL SQLSTATE "45000"
         SET MESSAGE_TEXT="User not found";
 	END IF;
-    SELECT id, date_added, username, first_name, last_name, bio FROM user_to_user
+    SELECT id1, date_added, username, first_name, last_name, bio FROM user_to_user
     JOIN user ON id2 = user.id
-    WHERE id1 = user_id_p AND status = "pending";
+    WHERE id2 = user_id_p AND status = "pending";
 END $$
 DELIMITER ;
 
--- CALL get_pending_friend_requests(2);
+-- CALL get_pending_friend_requests(3);
 -- CALL get_pending_friend_requests(51);
 
 /*
