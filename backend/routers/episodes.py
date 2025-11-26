@@ -77,6 +77,18 @@ async def getFilters(podcast_id: int):
         raise HTTPException(status_code=400, detail=message)
 
 
+# Get info about an episode
+@router.get("/{episode_num}")
+async def getPodcast(podcast_id: int, episode_num: int):
+    try:
+        with db_cursor() as cursor:
+            cursor.callproc("get_episode", (podcast_id, episode_num))
+            return cursor.fetchone()
+    except pymysql.err.OperationalError as e:
+        error_code, message = e.args
+        raise HTTPException(status_code=400, detail=message)
+
+
 # Create an episode review
 @router.post("/{episode_num}/reviews/{user_id}", status_code=201)
 async def addReviewEpisode(
