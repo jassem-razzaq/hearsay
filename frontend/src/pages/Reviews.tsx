@@ -24,12 +24,16 @@ export default function Reviews() {
 
   useEffect(() => {
     async function getUserPodcastReviews() {
-      const response: Response = await fetch(`${API_URL_BASE}/users/${urlID}/reviews/podcasts`);
+      const response: Response = await fetch(
+        `${API_URL_BASE}/users/${urlID}/reviews/podcasts`
+      );
       const data = await response.json();
       setPodcastReviews(data);
     }
     async function getUserEpisodeReviews() {
-      const response: Response = await fetch(`${API_URL_BASE}/users/${urlID}/reviews/episodes`);
+      const response: Response = await fetch(
+        `${API_URL_BASE}/users/${urlID}/reviews/episodes`
+      );
       const data = await response.json();
       setEpisodeReviews(data);
     }
@@ -50,7 +54,12 @@ export default function Reviews() {
               rating: review.rating,
               comment: review.comment,
               createdAt: review.created_at,
-              onClick: () => {},
+              onClick: () => {
+                () =>
+                  navigate(
+                    `/podcasts/${episode.podcast_id}/episodes/${episode.episode_num}`
+                  );
+              },
             }}
           />
         ))}
