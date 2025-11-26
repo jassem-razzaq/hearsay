@@ -15,13 +15,17 @@ type Episode = {
   episode_num: string;
 };
 
+type PlaylistProps = {
+  playlists: Playlist[];
+};
+
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
-export default function Playlists() {
+export default function Playlists({ playlists }: PlaylistProps) {
   const { loggedIn, userID, token } = useContext(LoginContext);
   const urlID = useParams().userID;
   const navigate = useNavigate();
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  //const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [episodesByPlaylist, setEpisodesByPlaylist] = useState<
     Record<string, Episode[]>
   >({});
@@ -29,18 +33,17 @@ export default function Playlists() {
     new Set()
   );
   const [refreshOnDelete, setRefreshOnDelete] = useState(0);
-  console.log(token);
 
   useEffect(() => {
-    // Playlist data
-    async function getUserPlaylists() {
-      const response: Response = await fetch(
-        `${API_URL_BASE}/users/${urlID}/playlists`
-      );
-      const data = await response.json();
-      setPlaylists(data);
-    }
-    getUserPlaylists();
+    // // Playlist data
+    // async function getUserPlaylists() {
+    //   const response: Response = await fetch(
+    //     `${API_URL_BASE}/users/${urlID}/playlists`
+    //   );
+    //   const data = await response.json();
+    //   setPlaylists(data);
+    // }
+    // getUserPlaylists();
   }, [urlID, loggedIn, userID, refreshOnDelete]);
 
   // Episode data
@@ -129,7 +132,7 @@ export default function Playlists() {
   return (
     <>
       <div>
-        {(playlists as Playlist[]).map((playlist) => {
+        {playlists.map((playlist) => {
           const episodes = episodesByPlaylist[playlist.name] ?? [];
           return (
             <div key={playlist.name}>
