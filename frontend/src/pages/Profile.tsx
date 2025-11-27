@@ -116,7 +116,7 @@ export default function Profile() {
       );
       const data = await response.json();
       const ids = new Set<number>(data.map((row: any) => Number(row.id)));
-      setPendingRequests(ids);
+      setSentRequests(ids);
     }
 
     getUserInfo();
@@ -137,9 +137,9 @@ export default function Profile() {
     const userIdNum = Number(userID);
     const urlIdNum = Number(urlID);
     if (userIdNum === urlIdNum) return "self";
+    if (friends.some((f) => f.id === userID)) return "friends";
     if (sentRequests.has(urlIdNum)) return "sent";
     if (pendingRequests.has(urlIdNum)) return "received";
-    if (friends.some((f) => f.id === userID)) return "friends";
     return "none";
   }
 
@@ -243,7 +243,6 @@ export default function Profile() {
           next.add(profileIdNum);
           return next;
         });
-        setRefreshToken(refreshtoken + 1);
       }
     } catch (error) {
       console.error("Failed to send friend request for user", error);
@@ -267,22 +266,8 @@ export default function Profile() {
       if (!response.ok) {
         console.error("Response from accept friend request not ok");
       } else {
-        try {
-          const response2 = await fetch(`${API_URL_BASE}/users/${userID}`);
-          const data: User = await response2.json();
-          const profileIdNum = Number(urlID);
-          setPendingRequests((prev) => {
-            const next = new Set(prev);
-            next.delete(profileIdNum);
-            return next;
-          });
-          alert("Friend request accepted!");
-        } catch (error) {
-          console.error(
-            "Failed to get user details when accepting request",
-            error
-          );
-        }
+        setSentRequests(sentRequests);
+        setRefreshToken(refreshtoken + 1);
       }
     } catch (error) {
       console.error("Failed to accept friend for user", error);
@@ -323,7 +308,7 @@ export default function Profile() {
             Add Friend
           </button>
         )}
-        {/* {relationship === "received" && (
+        {relationship === "received" && (
           <button
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
             onClick={() => handleAcceptRequest()}
@@ -331,12 +316,20 @@ export default function Profile() {
             Accept Request
           </button>
         )}
-        {relationship === "friends" && (
+        {/* {relationship === "friends" && (
           <button
             className="bg-red-500 hover:bg-red-700 text-white font-bold py-.5 px-1 rounded"
-            onClick={() => handleRejectRequest()}
+            onClick={() => handleDeleteFriend()}
           >
-            Reject Friend
+            Delete Friend
+          </button>
+        )} */}
+        {relationship === "friends" && (
+          <button
+            disabled
+            className="bg-blue-900 text-white font-bold py-.5 px-1 rounded"
+          >
+            Friends
           </button>
         )}
         {relationship === "sent" && (
@@ -346,7 +339,7 @@ export default function Profile() {
           >
             Request Sent
           </button>
-        )} */}
+        )}
       </div>
       {<div>Friends list</div>}
       <Friends friends={friends} onFriendDelete={handleDeleteFriend} />
