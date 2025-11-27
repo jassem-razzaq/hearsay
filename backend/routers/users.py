@@ -102,6 +102,18 @@ async def getUserPending(user_id: int):
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
 
+# Get sent friend requests for a user
+@router.get("/{user_id}/sent")
+async def getUserSent(user_id: int):
+    try:
+        with db_cursor() as cursor:
+            cursor.callproc("get_sent_friend_requests", (user_id,))
+            user_sent = cursor.fetchall()
+            return user_sent
+    except pymysql.err.OperationalError as e:
+        error_code, message = e.args
+        raise HTTPException(status_code=400, detail=message)
+
 
 # Send a friend request for a user
 @router.post("/{requester_id}/request/{user_id}")
