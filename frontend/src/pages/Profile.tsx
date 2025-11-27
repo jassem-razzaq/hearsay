@@ -309,21 +309,6 @@ export default function Profile() {
 
   // Guard profile
   if (!profile) return null;
-  console.log("userID:", userID);
-  console.log("urlID:", urlID);
-  console.log("sentRequests IDs:", Array.from(sentRequests));
-  console.log("pendingRequests IDs:", Array.from(pendingRequests));
-  console.log(
-    "friends IDs:",
-    friends.map((f) => f.id)
-  );
-  console.log("relationship:", relationship);
-  console.log("sent?     ", sentRequests.has(Number(urlID)));
-  console.log("received? ", pendingRequests.has(Number(urlID)));
-  console.log(
-    "friends?  ",
-    friends.some((f) => f.id === userID)
-  );
 
   return (
     <>
@@ -357,14 +342,6 @@ export default function Profile() {
             </button>
           </>
         )}
-        {/* {relationship === "friends" && (
-          <button
-            className="bg-red-500 hover:bg-red-700 text-white font-bold py-.5 px-1 rounded"
-            onClick={() => handleDeleteFriend()}
-          >
-            Delete Friend
-          </button>
-        )} */}
         {relationship === "friends" && (
           <button
             disabled
