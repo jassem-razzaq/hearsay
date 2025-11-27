@@ -54,12 +54,7 @@ export default function Reviews() {
               rating: review.rating,
               comment: review.comment,
               createdAt: review.created_at,
-              onClick: () => {
-                () =>
-                  navigate(
-                    `/podcasts/${episode.podcast_id}/episodes/${episode.episode_num}`
-                  );
-              },
+              onClick: () => {},
             }}
           />
         ))}

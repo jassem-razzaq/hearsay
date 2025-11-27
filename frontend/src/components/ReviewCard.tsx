@@ -21,7 +21,6 @@ type ReviewCardProps = {
 };
 
 export default function ReviewCard({ review }: ReviewCardProps) {
-  console.log("name: ", review.podcastName);
   return (
     <>
       <div

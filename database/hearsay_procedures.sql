@@ -140,7 +140,7 @@ BEGIN
 END $$
 DELIMITER ;
 -- SELECT * FROM user_to_user;
--- CALL send_friend_request(51, 1);
+-- CALL send_friend_request(8, 51);
 -- CALL send_friend_request(1, 51);
 
 /*
@@ -190,7 +190,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-SELECT * FROM user_to_user;
+-- SELECT * FROM user_to_user;
 -- CALL reject_friend_request(3, 2);
 -- CALL reject_friend_request(2, 51);
 -- CALL reject_friend_request(1, 51);
@@ -251,7 +251,7 @@ BEGIN
 		SIGNAL SQLSTATE "45000"
         SET MESSAGE_TEXT="User not found";
 	END IF;
-    SELECT id1, date_added, username, first_name, last_name, bio FROM user_to_user
+    SELECT id, date_added, username, first_name, last_name, bio FROM user_to_user
     JOIN user ON id1 = user.id
     WHERE id2 = user_id_p AND status = "pending";
 END $$

@@ -30,23 +30,40 @@ type Playlist = {
   description: string;
 };
 
+type Relationship = "friends" | "received" | "sent" | "none" | "self";
+
 type activeModal = "create" | null;
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
 export default function Profile() {
+  const urlID = useParams().userID;
   const { loggedIn, userID, token } = useContext(LoginContext);
-  const [profile, setProfile] = useState<User>([]);
+  const [profile, setProfile] = useState<User | null>(null);
   const [displayType, setDisplayType] = useState<DisplayType>("reviews");
+  const [refreshtoken, setRefreshToken] = useState<number>(0);
+  // Playlist states
   const [activeModal, setActiveModal] = useState<activeModal>(null);
   const [playlistName, setPlaylistName] = useState<string>("");
   const [playlistDesc, setPlaylistDesc] = useState<string>("");
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
-
+  // Friends states
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [pendingFriends, setPendingFriends] = useState<Friend[]>([]);
-
-  const urlID = useParams().userID;
+  const [pendingRequests, setPendingRequests] = useState<Set<number>>(
+    new Set()
+  );
+  const [sentRequests, setSentRequests] = useState<Set<number>>(new Set());
+  // Relationship
+  let relationship: Relationship = "none";
+  if (userID && urlID) {
+    relationship = getRelationship(
+      userID,
+      urlID,
+      sentRequests,
+      pendingRequests,
+      friends
+    );
+  }
 
   useEffect(() => {
     async function getUserInfo() {
@@ -71,25 +88,60 @@ export default function Profile() {
         `${API_URL_BASE}/users/${urlID}/friends`
       );
       const data = await response.json();
-      setFriends(data);
+      const mapped: Friend[] = data.map((row: any) => ({
+        id: String(row.id),
+        date_added: row.date_added,
+        username: row.username,
+        first_name: row.first_name,
+        last_name: row.last_name,
+        bio: row.bio,
+      }));
+      setFriends(mapped);
     }
     // Pending friends data
     async function getUserPendingRequests() {
+      if (!userID) return;
       const response: Response = await fetch(
-        `${API_URL_BASE}/users/${urlID}/pending`
+        `${API_URL_BASE}/users/${userID}/pending`
       );
       const data = await response.json();
-      setPendingFriends(data);
+      const ids = new Set<number>(data.map((row: any) => Number(row.id)));
+      setPendingRequests(ids);
     }
     // Sent friend requests data
-    async function getUserSentRequests() {}
-
-    getUserFriends();
-    getUserPendingRequests();
+    async function getUserSentRequests() {
+      if (!userID) return;
+      const response: Response = await fetch(
+        `${API_URL_BASE}/users/${userID}/sent`
+      );
+      const data = await response.json();
+      const ids = new Set<number>(data.map((row: any) => Number(row.id)));
+      setPendingRequests(ids);
+    }
 
     getUserInfo();
+    getUserFriends();
+    getUserPendingRequests();
+    getUserSentRequests();
     getUserPlaylists();
-  }, [urlID, loggedIn, userID]);
+  }, [urlID, loggedIn, userID, refreshtoken]);
+
+  // Get relationship status
+  function getRelationship(
+    userID: string,
+    urlID: string,
+    sentRequests: Set<number>,
+    pendingRequests: Set<number>,
+    friends: Friend[]
+  ): Relationship {
+    const userIdNum = Number(userID);
+    const urlIdNum = Number(urlID);
+    if (userIdNum === urlIdNum) return "self";
+    if (sentRequests.has(urlIdNum)) return "sent";
+    if (pendingRequests.has(urlIdNum)) return "received";
+    if (friends.some((f) => f.id === userID)) return "friends";
+    return "none";
+  }
 
   async function handlePlaylistCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -145,6 +197,7 @@ export default function Profile() {
     }
   }
 
+  // Delete friend from friends list
   async function handleDeleteFriend(friend: Friend) {
     try {
       const response = await fetch(
@@ -167,6 +220,93 @@ export default function Profile() {
     }
   }
 
+  // Send friend request
+  async function handleSendRequest(urlID: string | undefined) {
+    if (!urlID) return;
+    try {
+      const response = await fetch(
+        `${API_URL_BASE}/users/${userID}/request/${urlID}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error("Response from send friend request not ok");
+      } else {
+        const profileIdNum = Number(urlID);
+        setSentRequests((prev) => {
+          const next = new Set(prev);
+          next.add(profileIdNum);
+          return next;
+        });
+        setRefreshToken(refreshtoken + 1);
+      }
+    } catch (error) {
+      console.error("Failed to send friend request for user", error);
+    }
+  }
+
+  // Accept friend request
+  async function handleAcceptRequest() {
+    if (!urlID) return;
+    try {
+      const response = await fetch(
+        `${API_URL_BASE}/users/${userID}/request/${urlID}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error("Response from accept friend request not ok");
+      } else {
+        try {
+          const response2 = await fetch(`${API_URL_BASE}/users/${userID}`);
+          const data: User = await response2.json();
+          const profileIdNum = Number(urlID);
+          setPendingRequests((prev) => {
+            const next = new Set(prev);
+            next.delete(profileIdNum);
+            return next;
+          });
+          alert("Friend request accepted!");
+        } catch (error) {
+          console.error(
+            "Failed to get user details when accepting request",
+            error
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Failed to accept friend for user", error);
+    }
+  }
+
+  // Guard profile
+  if (!profile) return null;
+  console.log("userID:", userID);
+  console.log("urlID:", urlID);
+  console.log("sentRequests IDs:", Array.from(sentRequests));
+  console.log("pendingRequests IDs:", Array.from(pendingRequests));
+  console.log(
+    "friends IDs:",
+    friends.map((f) => f.id)
+  );
+  console.log("relationship:", relationship);
+  console.log("sent?     ", sentRequests.has(Number(urlID)));
+  console.log("received? ", pendingRequests.has(Number(urlID)));
+  console.log(
+    "friends?  ",
+    friends.some((f) => f.id === userID)
+  );
+
   return (
     <>
       <div>
@@ -174,7 +314,41 @@ export default function Profile() {
         <h1>{profile.username}</h1>
         <p>{profile.bio}</p>
       </div>
-      <div>Friends list</div>
+      <div>
+        {relationship === "none" && loggedIn && (
+          <button
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
+            onClick={() => handleSendRequest(urlID)}
+          >
+            Add Friend
+          </button>
+        )}
+        {relationship === "received" && (
+          <button
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
+            onClick={() => handleAcceptRequest()}
+          >
+            Accept Request
+          </button>
+        )}
+        {relationship === "friends" && (
+          <button
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-.5 px-1 rounded"
+            onClick={() => handleRejectRequest()}
+          >
+            Reject Friend
+          </button>
+        )}
+        {relationship === "sent" && (
+          <button
+            disabled
+            className="bg-blue-900 text-white font-bold py-.5 px-1 rounded"
+          >
+            Request Sent
+          </button>
+        )}
+      </div>
+      {<div>Friends list</div>}
       <Friends friends={friends} onFriendDelete={handleDeleteFriend} />
 
       <select

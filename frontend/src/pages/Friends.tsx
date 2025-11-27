@@ -24,28 +24,6 @@ export default function Friends({ friends, onFriendDelete }: FriendProps) {
 
   useEffect(() => {}, [urlID, userID]);
 
-  // async function handleSendRequest(friend: Friend) {
-  //   try {
-  //     const response = await fetch(
-  //       `${API_URL_BASE}/users/${userID}/request/${friend.id}`,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-  //     if (!response.ok) {
-  //       console.error("Response from send friend request not ok");
-  //     } else {
-  //       setFriends((prev) => prev.filter((fr) => fr.id !== friend.id));
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to delete friend for user", error);
-  //   }
-  // }
-
   return (
     <>
       {(friends as Friend[]).map((user) => {
