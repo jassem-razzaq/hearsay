@@ -134,7 +134,7 @@ export default function SearchBar({ searchType, onSearch, podcastID }: SearchBar
 
   return (
     <>
-      <div className="relative">
+      <div className="relative flex items-center w-full max-w-lg">
         <Button
           className="absolute top-1/2 transform -translate-y-1/2 bg-transparent hover:bg-transparent cursor-pointer"
           onClick={handleSearch}
@@ -142,7 +142,7 @@ export default function SearchBar({ searchType, onSearch, podcastID }: SearchBar
           <FontAwesomeIcon icon={faMagnifyingGlass} className="pt-0.25 text-lg" />
         </Button>
         <Input
-          className="w-100 h-7 pl-11 pr-8 py-4 text-base"
+          className="lg:w-100 md:w-75 sm:w-65 h-7 pl-11 pr-8 py-4 text-base"
           type="search"
           value={searchFilters.name}
           onChange={(e) => setSearchFilters({ ...searchFilters, name: e.target.value })}

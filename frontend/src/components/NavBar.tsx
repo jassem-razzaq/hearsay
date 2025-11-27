@@ -17,7 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SearchBar from "./SearchBar";
-import avatar from "../assets/avatar.png";
+import avatar from "../assets/minimalistAvatarM.jpg";
+import logo from "../assets/hearsayLogo.png";
 import { UserIcon, LogOutIcon } from "lucide-react";
 import {
   DropdownMenu,
@@ -140,13 +141,10 @@ export default function NavBar() {
 
   return (
     <div className="flex bg-popover h-16 top-0 left-0 justify-between items-center px-3">
-      <Button
-        className="rounded-full p-0 bg-white w-10 h-10 cursor-pointer flex justify-center items-center"
-        onClick={() => navigate("/")}
-      >
-        <img src={microphoneIcon} />
+      <Button className="p-0 bg-white cursor-pointer flex justify-center items-center" onClick={() => navigate("/")}>
+        <img className="w-30 rounded-full" src={logo} />
       </Button>
-      <div className="flex items-center">
+      <div className="flex justify-center items-center">
         <Select value={searchType} onValueChange={(value: SearchType) => setSearchType(value)}>
           <SelectTrigger className="cursor-pointer">
             <SelectValue placeholder={searchType} />
@@ -179,10 +177,13 @@ export default function NavBar() {
       </div>
       <div className="relative">
         {loggedIn ? (
-          <div className="relative">
+          <div className="flex relative">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <img src={avatar} className="w-7 cursor-pointer hover:scale-105 transition-all duration-200"></img>
+                <img
+                  src={avatar}
+                  className="w-10 rounded-full cursor-pointer hover:scale-105 transition-all duration-200 flex-shrink-0"
+                ></img>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="absolute transform -translate-x-25">
                 <DropdownMenuGroup>
