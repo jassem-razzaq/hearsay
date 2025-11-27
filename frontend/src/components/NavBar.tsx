@@ -17,6 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SearchBar from "./SearchBar";
+import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
+import avatar from "../assets/avatar.png";
+import { Command, CommandGroup } from "./ui/command";
+import { CommandItem } from "cmdk";
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
@@ -41,7 +45,7 @@ export default function NavBar() {
   const navigate = useNavigate();
   const [searchType, setSearchType] = useState<SearchType>("podcasts");
   const [activeModal, setActiveModal] = useState<activeModal>(null);
-  const { loggedIn, setLoggedIn, setUserID, onLogout, setToken } = useContext(LoginContext);
+  const { loggedIn, setLoggedIn, userID, setUserID, onLogout, setToken } = useContext(LoginContext);
 
   const [loginInfo, setLoginInfo] = useState<LoginInfo>({
     username: "",
@@ -157,15 +161,27 @@ export default function NavBar() {
       </div>
       <div className="relative">
         {loggedIn ? (
-          <div>
-            <button
-              onClick={() => {
-                onLogout();
-              }}
-            >
-              User
-            </button>
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <img src={avatar} className="w-7 cursor-pointer hover:scale-105 transition-all duration-200"></img>
+            </PopoverTrigger>
+
+            <PopoverContent className="w-30">
+              <Command>
+                <CommandGroup>
+                  <CommandItem
+                    className="cursor-pointer hover:bg-primary"
+                    onSelect={() => navigate(`/users/${userID}`)}
+                  >
+                    View Profile
+                  </CommandItem>
+                  <CommandItem className="cursor-pointer hover:bg-primary" onSelect={() => onLogout()}>
+                    Sign Out
+                  </CommandItem>
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
         ) : (
           <Dialog>
             <DialogTrigger asChild>
