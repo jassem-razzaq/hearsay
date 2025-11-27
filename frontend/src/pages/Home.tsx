@@ -9,25 +9,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import ReviewCard from "@/components/ReviewCard";
+import FeedCard from "@/components/FeedCard";
 
-type friendReview = {
-  userID: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  podcastId: string;
-  episodeNum: string;
-  rating: string;
+type FriendReview = {
   comment: string;
   createdAt: string;
+  episodeName: string;
+  episodeNum: string;
+  firstName: string;
+  id: string;
+  lastName: string;
+  podcastId: string;
+  podcastName: string;
+  rating: string;
+  username: string;
 };
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
 export default function Home() {
   const { loggedIn, userID } = useContext(LoginContext);
-  const [feed, setFeed] = useState<friendReview[]>([]);
+  const [feed, setFeed] = useState<FriendReview[]>([]);
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -45,16 +48,31 @@ export default function Home() {
     <div className="bg-background">
       {loggedIn ? (
         <div className="flex flex-col px-15 gap-5">
-          <Label className="text-xl font-bold mb-5">Your feed</Label>
+          <CardHeader>
+            <CardTitle className="text-xl font-bold mt-5">Your feed</CardTitle>
+          </CardHeader>
           {feed.length > 0 ? (
-            feed.map((review) => (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{review.firstName} rated</CardTitle>
-                </CardHeader>
-                <CardContent></CardContent>
-              </Card>
-            ))
+            <div className="grid lg:grid-cols-3 gap-5 justify-items-center">
+              {feed.map((review: FriendReview) => (
+                <FeedCard
+                  review={{
+                    id: review.id,
+                    username: review.username,
+                    firstName: review.firstName,
+                    lastName: review.lastName,
+                    podcastId: review.podcastId,
+                    podcastName: review.podcastName,
+                    rating: review.rating,
+                    comment: review.comment,
+                    createdAt: review.createdAt,
+                    onClick: () => {},
+                    type: "episode",
+                    episodeNum: review.episodeNum,
+                    episodeName: review.episodeName,
+                  }}
+                />
+              ))}
+            </div>
           ) : (
             <div className="flex justify-center items-center min-h-screen">
               <Card className="w-100 text-center">
