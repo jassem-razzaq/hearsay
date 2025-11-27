@@ -8,5 +8,21 @@ def snakeToCamel(snake_str: str) -> str:
 
 
 def convertListKeyToCamel(data: List[Dict]) -> List[Dict]:
-    """Convert all keys in a list of dictionaries from snake_case to camelCase."""
-    return [{snakeToCamel(k): v for k, v in item.items()} for item in data]
+    """
+    Convert a list of snake_case key dictionaries to camelCase key dictionaries
+    """
+    result = []
+    for d in data:
+        converted_dict = convertDictKeyToCamel(d)
+        result.append(converted_dict)
+    return result
+
+
+def convertDictKeyToCamel(data: Dict) -> Dict:
+    """
+    Convert a snake_case key dictionary to a camelCase key dictionary
+    """
+    result = {}
+    for key, value in data.items():
+        result[snakeToCamel(key)] = value
+    return result
