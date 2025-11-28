@@ -281,7 +281,7 @@ export default function SearchBar({ searchType, onSearch, podcastID }: SearchBar
                 />
                 {filteredHosts.length > 0 && (
                   <div className="absolute">
-                    <Command className="rounded-sm w-34 border">
+                    <Command className="rounded-sm w-34 border p-1">
                       <CommandList className="no-scrollbar">
                         {filteredHosts.map((host) => (
                           <CommandItem
@@ -311,7 +311,7 @@ export default function SearchBar({ searchType, onSearch, podcastID }: SearchBar
                 />
                 {filteredGuests.length > 0 && (
                   <div className="absolute">
-                    <Command className="rounded-xs border">
+                    <Command className="rounded-sm border p-1">
                       <CommandList className="no-scrollbar w-34">
                         {filteredGuests.map((guest) => (
                           <CommandItem
