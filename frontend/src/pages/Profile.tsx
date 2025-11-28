@@ -37,11 +37,14 @@ type activeModal = "create" | "update" | null;
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
 export default function Profile() {
+  // General constants / states
   const urlID = useParams().userID;
   const { loggedIn, userID, token } = useContext(LoginContext);
-  const [profile, setProfile] = useState<User | null>(null);
-  const [displayType, setDisplayType] = useState<DisplayType>("reviews");
   const [refreshtoken, setRefreshToken] = useState<number>(0);
+  const [displayType, setDisplayType] = useState<DisplayType>("reviews");
+  // User states
+  const [profile, setProfile] = useState<User | null>(null);
+  const [bio, setBio] = useState<string>("");
   // Playlist states
   const [activeModal, setActiveModal] = useState<activeModal>(null);
   const [playlistName, setPlaylistName] = useState<string>("");
@@ -146,7 +149,8 @@ export default function Profile() {
   }
 
   // Update bio
-  async function handleUpdateBio(bio: string) {
+  async function handleUpdateBio(e: React.FormEvent) {
+    e.preventDefault();
     try {
       const response = await fetch(`${API_URL_BASE}/users/${userID}`, {
         method: "PUT",
@@ -154,11 +158,17 @@ export default function Profile() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ bio: bio }),
       });
       if (!response.ok) {
         console.error("Response not ok from update bio");
       } else {
-        setProfile(profile);
+        if (profile) {
+          setProfile((prev) => ({
+            ...prev!,
+            bio: bio,
+          }));
+        }
       }
     } catch (error) {
       console.error("Failed to update bio", error);
@@ -478,7 +488,7 @@ export default function Profile() {
         />
       )}
       {activeModal === "create" && (
-        <div className="bg-yellow-200 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <div className="bg-purple-900 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <form className="flex flex-col" onSubmit={handlePlaylistCreate}>
             <label>Name of new playlist</label>
             <input
@@ -490,6 +500,25 @@ export default function Profile() {
               type="text"
               onChange={(e) => setPlaylistDesc(e.target.value)}
               placeholder="Description..."
+            ></input>
+            <button
+              type="submit"
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Confirm
+            </button>
+          </form>
+        </div>
+      )}
+      {activeModal === "update" && (
+        <div className="bg-purple-900 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <form className="flex flex-col" onSubmit={handleUpdateBio}>
+            <label>New bio: </label>
+            <input
+              type="text"
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Your bio..."
+              value={bio}
             ></input>
             <button
               type="submit"
