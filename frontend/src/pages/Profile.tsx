@@ -274,7 +274,11 @@ export default function Profile() {
   }
 
   // Accept friend request
-  async function handleAcceptRequest(requester: string, responder: string) {
+  async function handleAcceptRequest(
+    requester: string,
+    responder: string,
+    friend: Friend | null
+  ) {
     try {
       const response = await fetch(
         `${API_URL_BASE}/users/${responder}/request/${requester}`,
@@ -294,7 +298,17 @@ export default function Profile() {
           next.delete(Number(responder));
           return next;
         });
-        setRefreshToken(refreshtoken + 1);
+        // Accepting from pending list
+        if (friend) {
+          setFriends((prev) => {
+            const next = [...prev, friend];
+            return next;
+          });
+        }
+        // Accepting from requester's page
+        else {
+          setRefreshToken(refreshtoken + 1);
+        }
       }
     } catch (error) {
       console.error("Failed to accept friend for user", error);
@@ -304,7 +318,8 @@ export default function Profile() {
   // Reject friend request
   async function handleRejectRequest(
     requester: string | null,
-    responder: string
+    responder: string,
+    friend: Friend | null
   ) {
     if (!requester) return;
     try {
@@ -321,11 +336,17 @@ export default function Profile() {
       if (!response.ok) {
         console.error("Response from reject friend request not ok");
       } else {
-        setPendingRequests((prev) => {
-          const next = new Set(prev);
-          next.delete(Number(requester));
-          return next;
-        });
+        // Rejecting on requester's user page
+        if (!friend) {
+          setPendingRequests((prev) => {
+            const next = new Set(prev);
+            next.delete(Number(requester));
+            return next;
+          });
+        } else {
+          // Rejecting from pending list
+          setPendingList((prev) => prev.filter((fr) => fr.id !== friend.id));
+        }
         setRefreshToken(refreshtoken + 1);
       }
     } catch (error) {
@@ -362,7 +383,7 @@ export default function Profile() {
               onClick={(e) => {
                 e.stopPropagation();
                 if (urlID) {
-                  handleAcceptRequest(urlID, userID);
+                  handleAcceptRequest(urlID, userID, null);
                 }
               }}
             >
@@ -373,7 +394,7 @@ export default function Profile() {
               onClick={(e) => {
                 e.stopPropagation();
                 if (urlID) {
-                  handleRejectRequest(urlID, userID);
+                  handleRejectRequest(urlID, userID, null);
                 }
               }}
             >
@@ -398,12 +419,14 @@ export default function Profile() {
           </button>
         )}
       </div>
-      {<div>Friends list</div>}
-      <Friends
-        friends={friends}
-        mode="list"
-        onFriendDelete={handleDeleteFriend}
-      />
+      <div>
+        Friends list
+        <Friends
+          friends={friends}
+          mode="list"
+          onFriendDelete={handleDeleteFriend}
+        />
+      </div>
 
       <select
         value={displayType}
