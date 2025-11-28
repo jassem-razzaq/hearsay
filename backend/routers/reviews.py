@@ -4,6 +4,7 @@ from ..db import db_cursor
 from .auth import getCurrentUser
 from pydantic import BaseModel
 import pymysql
+from ..utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
 
 
 class Review(BaseModel):
@@ -16,7 +17,12 @@ router = APIRouter()
 
 # Create a podcast review
 @router.post("/{user_id}", status_code=201)
-async def addReviewPodcast(user_id: int, podcast_id: int, review: Review, current_user: int = Depends(getCurrentUser)):
+async def addReviewPodcast(
+    user_id: int,
+    podcast_id: int,
+    review: Review,
+    current_user: int = Depends(getCurrentUser),
+):
     if current_user != user_id:
         raise HTTPException(
             status_code=400, detail="Unauthorized to make changes to user"
@@ -44,8 +50,7 @@ async def getReviewPodcast(user_id: int, podcast_id: int):
     try:
         with db_cursor() as cursor:
             cursor.callproc("get_podcast_review", (user_id, podcast_id))
-            podcast_review = cursor.fetchone()
-            return podcast_review
+            return convertDictKeyToCamel(cursor.fetchone())
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
@@ -53,7 +58,12 @@ async def getReviewPodcast(user_id: int, podcast_id: int):
 
 # Update a podcast review
 @router.put("/{user_id}")
-async def updateReviewPodcast(user_id: int, podcast_id: int, review: Review, current_user: int = Depends(getCurrentUser)):
+async def updateReviewPodcast(
+    user_id: int,
+    podcast_id: int,
+    review: Review,
+    current_user: int = Depends(getCurrentUser),
+):
     if current_user != user_id:
         raise HTTPException(
             status_code=400, detail="Unauthorized to make changes to user"
@@ -77,7 +87,9 @@ async def updateReviewPodcast(user_id: int, podcast_id: int, review: Review, cur
 
 # Delete a podcast review
 @router.delete("/{user_id}")
-async def deleteUserPodcastReview(podcast_id: int, user_id: int, current_user: int = Depends(getCurrentUser)):
+async def deleteUserPodcastReview(
+    podcast_id: int, user_id: int, current_user: int = Depends(getCurrentUser)
+):
     if current_user != user_id:
         raise HTTPException(
             status_code=400, detail="Unauthorized to make changes to user"
@@ -109,8 +121,7 @@ async def getAllFriendsReviewsPodcast(podcast_id: int, user_id: int):
                     podcast_id,
                 ),
             )
-            return cursor.fetchall()
+            return convertListKeyToCamel(cursor.fetchall())
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
-

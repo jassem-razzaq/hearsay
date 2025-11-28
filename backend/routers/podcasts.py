@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from .episodes import router as episodes_router
 from .reviews import router as reviews_router
 import pymysql
-from ..utils.convertSnakeToCamel import convertListKeyToCamel
+from ..utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
 
 
 class Review(BaseModel):
@@ -107,13 +107,13 @@ async def getPodcast(podcast_id: int):
     try:
         with db_cursor() as cursor:
             cursor.callproc("get_podcast", (podcast_id,))
-            return cursor.fetchone()
+            return convertDictKeyToCamel(cursor.fetchone())
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
 
 
-# Get all derived podcast ratings for a user
+# Get all derived podcast ratings
 @router.get("/{podcast_id}/ratings/")
 async def getPodcastGlobalRatings(podcast_id: int):
     try:
@@ -127,16 +127,16 @@ async def getPodcastGlobalRatings(podcast_id: int):
             global_avg_rating_by_ep = cursor.fetchone()
 
             return {
-                "global_avg_rating": list(global_avg_rating.values())[0],
-                "global_avg_rating_by_ep": list(global_avg_rating_by_ep.values())[0],
+                "globalAvgRating": list(global_avg_rating.values())[0],
+                "globalAvgRatingByEp": list(global_avg_rating_by_ep.values())[0],
             }
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
 
 
-# Get all derived podcast friend ratings for a user
-@router.get("/{podcast_id}/ratings/{user_id}")
+# Get all derived podcast friend ratings for a user's friends
+@router.get("/{podcast_id}/ratings/{user_id}/friends")
 async def getPodcastUserFriendsRatings(podcast_id: int, user_id: int):
     try:
         with db_cursor() as cursor:
@@ -160,8 +160,8 @@ async def getPodcastUserFriendsRatings(podcast_id: int, user_id: int):
             )
             friends_avg_rating_by_ep = cursor.fetchone()
             return {
-                "friends_avg_rating": list(friends_avg_rating.values())[0],
-                "friends_avg_rating_by_ep": list(friends_avg_rating_by_ep.values())[0],
+                "friendsAvgRating": list(friends_avg_rating.values())[0],
+                "friendsAvgRatingByEp": list(friends_avg_rating_by_ep.values())[0],
             }
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
