@@ -32,7 +32,7 @@ type Playlist = {
 
 type Relationship = "friends" | "received" | "sent" | "none" | "self";
 
-type activeModal = "create" | null;
+type activeModal = "create" | "update" | null;
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
@@ -364,6 +364,16 @@ export default function Profile() {
         <img src={avatar} className="w-48 h-48"></img>
         <h1>{profile.username}</h1>
         <p>{profile.bio}</p>
+        <button
+          className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
+          onClick={
+            activeModal !== "update"
+              ? () => setActiveModal("update")
+              : () => setActiveModal(null)
+          }
+        >
+          Update bio
+        </button>
       </div>
       <div>
         {relationship === "none" && loggedIn && (
@@ -452,7 +462,7 @@ export default function Profile() {
         <button
           className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
           onClick={
-            activeModal === null
+            activeModal !== "create"
               ? () => setActiveModal("create")
               : () => setActiveModal(null)
           }
