@@ -49,6 +49,7 @@ export default function Profile() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   // Friends states
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [pendingList, setPendingList] = useState<Friend[]>([]);
   const [pendingRequests, setPendingRequests] = useState<Set<number>>(
     new Set()
   );
@@ -106,6 +107,7 @@ export default function Profile() {
       );
       const data = await response.json();
       const ids = new Set<number>(data.map((row: any) => Number(row.id)));
+      setPendingList(data);
       setPendingRequests(ids);
     }
     // Sent friend requests data
@@ -143,6 +145,27 @@ export default function Profile() {
     return "none";
   }
 
+  // Update bio
+  async function handleUpdateBio(bio: string) {
+    try {
+      const response = await fetch(`${API_URL_BASE}/users/${userID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        console.error("Response not ok from update bio");
+      } else {
+        setProfile(profile);
+      }
+    } catch (error) {
+      console.error("Failed to update bio", error);
+    }
+  }
+
+  // Create playlist
   async function handlePlaylistCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!playlistName) {
@@ -175,6 +198,7 @@ export default function Profile() {
     }
   }
 
+  // Delete playlist
   async function handlePlaylistDelete(playlist: string) {
     try {
       const response = await fetch(
@@ -250,11 +274,14 @@ export default function Profile() {
   }
 
   // Accept friend request
-  async function handleAcceptRequest() {
-    if (!urlID) return;
+  async function handleAcceptRequest(
+    requester: string,
+    responder: string,
+    friend: Friend | null
+  ) {
     try {
       const response = await fetch(
-        `${API_URL_BASE}/users/${userID}/request/${urlID}`,
+        `${API_URL_BASE}/users/${responder}/request/${requester}`,
         {
           method: "PUT",
           headers: {
@@ -268,10 +295,21 @@ export default function Profile() {
       } else {
         setSentRequests((prev) => {
           const next = new Set(prev);
-          next.delete(Number(urlID));
+          next.delete(Number(responder));
           return next;
         });
-        setRefreshToken(refreshtoken + 1);
+        // Accepting from pending list
+        if (friend) {
+          setFriends((prev) => {
+            const next = [...prev, friend];
+            return next;
+          });
+          setPendingList((prev) => prev.filter((fr) => fr.id !== friend.id));
+        }
+        // Accepting from requester's page
+        else {
+          setRefreshToken(refreshtoken + 1);
+        }
       }
     } catch (error) {
       console.error("Failed to accept friend for user", error);
@@ -279,11 +317,15 @@ export default function Profile() {
   }
 
   // Reject friend request
-  async function handleRejectRequest() {
-    if (!urlID) return;
+  async function handleRejectRequest(
+    requester: string | null,
+    responder: string,
+    friend: Friend | null
+  ) {
+    if (!requester) return;
     try {
       const response = await fetch(
-        `${API_URL_BASE}/users/${userID}/request/${urlID}`,
+        `${API_URL_BASE}/users/${responder}/request/${requester}`,
         {
           method: "DELETE",
           headers: {
@@ -295,11 +337,17 @@ export default function Profile() {
       if (!response.ok) {
         console.error("Response from reject friend request not ok");
       } else {
-        setPendingRequests((prev) => {
-          const next = new Set(prev);
-          next.delete(Number(urlID));
-          return next;
-        });
+        // Rejecting on requester's user page
+        if (!friend) {
+          setPendingRequests((prev) => {
+            const next = new Set(prev);
+            next.delete(Number(requester));
+            return next;
+          });
+        } else {
+          // Rejecting from pending list
+          setPendingList((prev) => prev.filter((fr) => fr.id !== friend.id));
+        }
         setRefreshToken(refreshtoken + 1);
       }
     } catch (error) {
@@ -321,7 +369,10 @@ export default function Profile() {
         {relationship === "none" && loggedIn && (
           <button
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
-            onClick={() => handleSendRequest(urlID)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSendRequest(urlID);
+            }}
           >
             Add Friend
           </button>
@@ -330,13 +381,23 @@ export default function Profile() {
           <>
             <button
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
-              onClick={() => handleAcceptRequest()}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (urlID) {
+                  handleAcceptRequest(urlID, userID, null);
+                }
+              }}
             >
               Accept Request
             </button>
             <button
               className="bg-red-500 hover:bg-red-700 text-white font-bold py-.5 px-1 rounded"
-              onClick={() => handleRejectRequest()}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (urlID) {
+                  handleRejectRequest(urlID, userID, null);
+                }
+              }}
             >
               Reject Request
             </button>
@@ -359,8 +420,26 @@ export default function Profile() {
           </button>
         )}
       </div>
-      {<div>Friends list</div>}
-      <Friends friends={friends} onFriendDelete={handleDeleteFriend} />
+      <div>
+        Friends list
+        <Friends
+          friends={friends}
+          mode="list"
+          onFriendAccept={handleAcceptRequest}
+          onFriendReject={handleRejectRequest}
+          onFriendDelete={handleDeleteFriend}
+        />
+      </div>
+      <div>
+        Pending requests
+        <Friends
+          friends={pendingList}
+          mode="requests"
+          onFriendAccept={handleAcceptRequest}
+          onFriendReject={handleRejectRequest}
+          onFriendDelete={handleDeleteFriend}
+        />
+      </div>
 
       <select
         value={displayType}
