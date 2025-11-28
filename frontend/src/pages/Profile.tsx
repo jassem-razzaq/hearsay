@@ -49,6 +49,7 @@ export default function Profile() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   // Friends states
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [pendingList, setPendingList] = useState<Friend[]>([]);
   const [pendingRequests, setPendingRequests] = useState<Set<number>>(
     new Set()
   );
@@ -106,6 +107,7 @@ export default function Profile() {
       );
       const data = await response.json();
       const ids = new Set<number>(data.map((row: any) => Number(row.id)));
+      setPendingList(data);
       setPendingRequests(ids);
     }
     // Sent friend requests data
@@ -141,6 +143,26 @@ export default function Profile() {
     if (sentRequests.has(urlIdNum)) return "sent";
     if (pendingRequests.has(urlIdNum)) return "received";
     return "none";
+  }
+
+  // Update bio
+  async function handleUpdateBio(bio: string) {
+    try {
+      const response = await fetch(`${API_URL_BASE}/users/${userID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        console.error("Response not ok from update bio");
+      } else {
+        setProfile(profile);
+      }
+    } catch (error) {
+      console.error("Failed to update bio", error);
+    }
   }
 
   // Create playlist
@@ -252,11 +274,10 @@ export default function Profile() {
   }
 
   // Accept friend request
-  async function handleAcceptRequest() {
-    if (!urlID) return;
+  async function handleAcceptRequest(requester: string, responder: string) {
     try {
       const response = await fetch(
-        `${API_URL_BASE}/users/${userID}/request/${urlID}`,
+        `${API_URL_BASE}/users/${responder}/request/${requester}`,
         {
           method: "PUT",
           headers: {
@@ -270,7 +291,7 @@ export default function Profile() {
       } else {
         setSentRequests((prev) => {
           const next = new Set(prev);
-          next.delete(Number(urlID));
+          next.delete(Number(responder));
           return next;
         });
         setRefreshToken(refreshtoken + 1);
@@ -281,11 +302,14 @@ export default function Profile() {
   }
 
   // Reject friend request
-  async function handleRejectRequest() {
-    if (!urlID) return;
+  async function handleRejectRequest(
+    requester: string | null,
+    responder: string
+  ) {
+    if (!requester) return;
     try {
       const response = await fetch(
-        `${API_URL_BASE}/users/${userID}/request/${urlID}`,
+        `${API_URL_BASE}/users/${responder}/request/${requester}`,
         {
           method: "DELETE",
           headers: {
@@ -299,7 +323,7 @@ export default function Profile() {
       } else {
         setPendingRequests((prev) => {
           const next = new Set(prev);
-          next.delete(Number(urlID));
+          next.delete(Number(requester));
           return next;
         });
         setRefreshToken(refreshtoken + 1);
@@ -332,13 +356,21 @@ export default function Profile() {
           <>
             <button
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
-              onClick={() => handleAcceptRequest()}
+              onClick={() => {
+                if (urlID) {
+                  handleAcceptRequest(urlID, userID);
+                }
+              }}
             >
               Accept Request
             </button>
             <button
               className="bg-red-500 hover:bg-red-700 text-white font-bold py-.5 px-1 rounded"
-              onClick={() => handleRejectRequest()}
+              onClick={() => {
+                if (urlID) {
+                  handleRejectRequest(urlID, userID);
+                }
+              }}
             >
               Reject Request
             </button>
@@ -362,7 +394,11 @@ export default function Profile() {
         )}
       </div>
       {<div>Friends list</div>}
-      <Friends friends={friends} onFriendDelete={handleDeleteFriend} />
+      <Friends
+        friends={friends}
+        mode="list"
+        onFriendDelete={handleDeleteFriend}
+      />
 
       <select
         value={displayType}

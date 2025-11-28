@@ -14,6 +14,8 @@ type Friend = {
 
 type FriendProps = {
   friends: Friend[];
+  mode: "list" | "requests";
+  //onFriendAccept: (name: Friend) => void;
   onFriendDelete: (name: Friend) => void;
 };
 
