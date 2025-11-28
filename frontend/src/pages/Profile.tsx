@@ -32,16 +32,19 @@ type Playlist = {
 
 type Relationship = "friends" | "received" | "sent" | "none" | "self";
 
-type activeModal = "create" | null;
+type activeModal = "create" | "update" | null;
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
 export default function Profile() {
+  // General constants / states
   const urlID = useParams().userID;
   const { loggedIn, userID, token } = useContext(LoginContext);
-  const [profile, setProfile] = useState<User | null>(null);
-  const [displayType, setDisplayType] = useState<DisplayType>("reviews");
   const [refreshtoken, setRefreshToken] = useState<number>(0);
+  const [displayType, setDisplayType] = useState<DisplayType>("reviews");
+  // User states
+  const [profile, setProfile] = useState<User | null>(null);
+  const [bio, setBio] = useState<string>("");
   // Playlist states
   const [activeModal, setActiveModal] = useState<activeModal>(null);
   const [playlistName, setPlaylistName] = useState<string>("");
@@ -49,6 +52,7 @@ export default function Profile() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   // Friends states
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [pendingList, setPendingList] = useState<Friend[]>([]);
   const [pendingRequests, setPendingRequests] = useState<Set<number>>(
     new Set()
   );
@@ -106,6 +110,7 @@ export default function Profile() {
       );
       const data = await response.json();
       const ids = new Set<number>(data.map((row: any) => Number(row.id)));
+      setPendingList(data);
       setPendingRequests(ids);
     }
     // Sent friend requests data
@@ -124,7 +129,7 @@ export default function Profile() {
     getUserPendingRequests();
     getUserSentRequests();
     getUserPlaylists();
-  }, [urlID, loggedIn, userID, refreshtoken]);
+  }, [profile, urlID, loggedIn, userID, refreshtoken]);
 
   // Get relationship status
   function getRelationship(
@@ -143,6 +148,34 @@ export default function Profile() {
     return "none";
   }
 
+  // Update bio
+  async function handleUpdateBio(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${API_URL_BASE}/users/${userID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bio: bio }),
+      });
+      if (!response.ok) {
+        console.error("Response not ok from update bio");
+      } else {
+        if (profile) {
+          setProfile((prev) => ({
+            ...prev!,
+            bio: bio,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Failed to update bio", error);
+    }
+  }
+
+  // Create playlist
   async function handlePlaylistCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!playlistName) {
@@ -175,6 +208,7 @@ export default function Profile() {
     }
   }
 
+  // Delete playlist
   async function handlePlaylistDelete(playlist: string) {
     try {
       const response = await fetch(
@@ -250,11 +284,14 @@ export default function Profile() {
   }
 
   // Accept friend request
-  async function handleAcceptRequest() {
-    if (!urlID) return;
+  async function handleAcceptRequest(
+    requester: string,
+    responder: string,
+    friend: Friend | null
+  ) {
     try {
       const response = await fetch(
-        `${API_URL_BASE}/users/${userID}/request/${urlID}`,
+        `${API_URL_BASE}/users/${responder}/request/${requester}`,
         {
           method: "PUT",
           headers: {
@@ -268,10 +305,21 @@ export default function Profile() {
       } else {
         setSentRequests((prev) => {
           const next = new Set(prev);
-          next.delete(Number(urlID));
+          next.delete(Number(responder));
           return next;
         });
-        setRefreshToken(refreshtoken + 1);
+        // Accepting from pending list
+        if (friend) {
+          setFriends((prev) => {
+            const next = [...prev, friend];
+            return next;
+          });
+          setPendingList((prev) => prev.filter((fr) => fr.id !== friend.id));
+        }
+        // Accepting from requester's page
+        else {
+          setRefreshToken(refreshtoken + 1);
+        }
       }
     } catch (error) {
       console.error("Failed to accept friend for user", error);
@@ -279,11 +327,15 @@ export default function Profile() {
   }
 
   // Reject friend request
-  async function handleRejectRequest() {
-    if (!urlID) return;
+  async function handleRejectRequest(
+    requester: string | null,
+    responder: string,
+    friend: Friend | null
+  ) {
+    if (!requester) return;
     try {
       const response = await fetch(
-        `${API_URL_BASE}/users/${userID}/request/${urlID}`,
+        `${API_URL_BASE}/users/${responder}/request/${requester}`,
         {
           method: "DELETE",
           headers: {
@@ -295,11 +347,17 @@ export default function Profile() {
       if (!response.ok) {
         console.error("Response from reject friend request not ok");
       } else {
-        setPendingRequests((prev) => {
-          const next = new Set(prev);
-          next.delete(Number(urlID));
-          return next;
-        });
+        // Rejecting on requester's user page
+        if (!friend) {
+          setPendingRequests((prev) => {
+            const next = new Set(prev);
+            next.delete(Number(requester));
+            return next;
+          });
+        } else {
+          // Rejecting from pending list
+          setPendingList((prev) => prev.filter((fr) => fr.id !== friend.id));
+        }
         setRefreshToken(refreshtoken + 1);
       }
     } catch (error) {
@@ -316,12 +374,27 @@ export default function Profile() {
         <img src={avatar} className="w-48 h-48"></img>
         <h1>{profile.username}</h1>
         <p>{profile.bio}</p>
+        {userID === urlID && (
+          <button
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
+            onClick={
+              activeModal !== "update"
+                ? () => setActiveModal("update")
+                : () => setActiveModal(null)
+            }
+          >
+            Update bio
+          </button>
+        )}
       </div>
       <div>
         {relationship === "none" && loggedIn && (
           <button
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
-            onClick={() => handleSendRequest(urlID)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSendRequest(urlID);
+            }}
           >
             Add Friend
           </button>
@@ -330,13 +403,23 @@ export default function Profile() {
           <>
             <button
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
-              onClick={() => handleAcceptRequest()}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (urlID) {
+                  handleAcceptRequest(urlID, userID, null);
+                }
+              }}
             >
               Accept Request
             </button>
             <button
               className="bg-red-500 hover:bg-red-700 text-white font-bold py-.5 px-1 rounded"
-              onClick={() => handleRejectRequest()}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (urlID) {
+                  handleRejectRequest(urlID, userID, null);
+                }
+              }}
             >
               Reject Request
             </button>
@@ -359,8 +442,26 @@ export default function Profile() {
           </button>
         )}
       </div>
-      {<div>Friends list</div>}
-      <Friends friends={friends} onFriendDelete={handleDeleteFriend} />
+      <div>
+        Friends list
+        <Friends
+          friends={friends}
+          mode="list"
+          onFriendAccept={handleAcceptRequest}
+          onFriendReject={handleRejectRequest}
+          onFriendDelete={handleDeleteFriend}
+        />
+      </div>
+      <div>
+        Pending requests
+        <Friends
+          friends={pendingList}
+          mode="requests"
+          onFriendAccept={handleAcceptRequest}
+          onFriendReject={handleRejectRequest}
+          onFriendDelete={handleDeleteFriend}
+        />
+      </div>
 
       <select
         value={displayType}
@@ -373,7 +474,7 @@ export default function Profile() {
         <button
           className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
           onClick={
-            activeModal === null
+            activeModal !== "create"
               ? () => setActiveModal("create")
               : () => setActiveModal(null)
           }
@@ -389,7 +490,7 @@ export default function Profile() {
         />
       )}
       {activeModal === "create" && (
-        <div className="bg-yellow-200 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <div className="bg-purple-900 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <form className="flex flex-col" onSubmit={handlePlaylistCreate}>
             <label>Name of new playlist</label>
             <input
@@ -401,6 +502,25 @@ export default function Profile() {
               type="text"
               onChange={(e) => setPlaylistDesc(e.target.value)}
               placeholder="Description..."
+            ></input>
+            <button
+              type="submit"
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Confirm
+            </button>
+          </form>
+        </div>
+      )}
+      {activeModal === "update" && (
+        <div className="bg-purple-900 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <form className="flex flex-col" onSubmit={handleUpdateBio}>
+            <label>New bio: </label>
+            <input
+              type="text"
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Your bio..."
+              value={bio}
             ></input>
             <button
               type="submit"
