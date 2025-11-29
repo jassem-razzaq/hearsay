@@ -14,9 +14,9 @@ function App() {
   return (
     <BrowserRouter>
       <LoginProvider>
+        <ScrollToTop />
         <Toaster />
         <NavBar />
-        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/results" element={<Results />} />
