@@ -1180,3 +1180,25 @@ DELIMITER ;
 
 -- SELECT * FROM episode_review;
 -- SELECT * FROM user_to_user WHERE id1 = 1;
+
+
+-- SELECT * FROM user;
+-- CALL insert_podcast_review(53, 1, 3, "It's okay");
+-- CALL insert_podcast_review(54, 1, 5, "I love it");
+-- CALL insert_podcast_review(55, 1, 1, "");
+-- CALL insert_podcast_review(56, 1, 5, "Truly amazing");
+-- CALL insert_podcast_review(57, 1, 4, "");
+-- CALL send_friend_request(51, 53);
+-- CALL accept_friend_request(53, 51);
+
+-- CALL send_friend_request(51, 54);
+-- CALL accept_friend_request(54, 51);
+
+-- CALL send_friend_request(51, 55);
+-- CALL accept_friend_request(55, 51);
+
+-- CALL send_friend_request(51, 56);
+-- CALL accept_friend_request(56, 51);
+
+-- CALL send_friend_request(51, 57);
+-- CALL accept_friend_request(57, 51);
