@@ -8,6 +8,7 @@ import { LoginProvider } from "./contexts/LoginContext";
 import { Toaster } from "./components/ui/sonner";
 import Profile from "./pages/Profile";
 import Episode from "./pages/Episode";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       <LoginProvider>
         <Toaster />
         <NavBar />
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/results" element={<Results />} />
