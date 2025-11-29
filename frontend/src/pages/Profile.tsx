@@ -1,11 +1,14 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { LoginContext } from "../contexts/LoginContext";
-import avatar from "../assets/avatar.png";
+import minimalistAvatarM from "../assets/minimalistAvatarM.jpg";
+import * as React from "react";
+
 import Friends from "./Friends";
 import Playlists from "./Playlists";
 import Reviews from "./Reviews";
 import UserBio from "@/components/UserBio";
+import FriendsListTest from "@/components/FriendsListTest";
 
 type DisplayType = "reviews" | "playlists";
 
@@ -370,10 +373,22 @@ export default function Profile() {
   // Guard profile
   if (!profile) return null;
 
+  // test data
+  const fake: User = {
+    id: "1",
+    username: "fake-chan",
+    first_name: "Fake",
+    last_name: "Chan",
+    bio: "Hi I'm fake chan REEEEEEEEEEE",
+  };
+
   return (
     <>
       <div>
-        <img src={avatar} className="w-48 h-48"></img>
+        <img
+          src={minimalistAvatarM}
+          className="w-48 h-48 rounded-full border-4 border-purple-500"
+        ></img>
         <h1>{profile.username}</h1>
         <p>{profile.bio}</p>
         {userID === urlID && (
@@ -505,6 +520,14 @@ export default function Profile() {
           </form>
         </div>
       )}
+      <FriendsListTest
+        id={fake.id}
+        username={fake.username}
+        first_name={fake.first_name}
+        last_name={fake.last_name}
+        bio={fake.bio}
+        onClick={() => {}}
+      />
     </>
   );
 }
