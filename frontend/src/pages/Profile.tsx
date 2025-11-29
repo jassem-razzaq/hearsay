@@ -4,11 +4,10 @@ import { LoginContext } from "../contexts/LoginContext";
 import minimalistAvatarM from "../assets/minimalistAvatarM.jpg";
 import * as React from "react";
 
-import Friends from "./Friends";
 import Playlists from "./Playlists";
 import Reviews from "./Reviews";
 import UserBio from "@/components/UserBio";
-import FriendsListTest from "@/components/FriendsListTest";
+import FriendsList from "@/components/FriendsList";
 
 type DisplayType = "reviews" | "playlists";
 
@@ -450,27 +449,26 @@ export default function Profile() {
           </button>
         )}
       </div>
-      <div>
-        Friends list
-        <Friends
-          friends={friends}
-          mode="list"
-          onFriendAccept={handleAcceptRequest}
-          onFriendReject={handleRejectRequest}
-          onFriendDelete={handleDeleteFriend}
-        />
-      </div>
-      <div>
-        Pending requests
-        <Friends
+      {/* Friends list */}
+      <FriendsList
+        title="Friends list"
+        friends={friends}
+        mode="list"
+        onFriendAccept={handleAcceptRequest}
+        onFriendReject={handleRejectRequest}
+        onFriendDelete={handleDeleteFriend}
+      />
+      {/* Pending requests */}
+      {userID === urlID && (
+        <FriendsList
+          title="Pending requests"
           friends={pendingList}
           mode="requests"
           onFriendAccept={handleAcceptRequest}
           onFriendReject={handleRejectRequest}
           onFriendDelete={handleDeleteFriend}
         />
-      </div>
-
+      )}
       <select
         value={displayType}
         onChange={(e) => setDisplayType(e.target.value as DisplayType)}
@@ -520,14 +518,6 @@ export default function Profile() {
           </form>
         </div>
       )}
-      <FriendsListTest
-        id={fake.id}
-        username={fake.username}
-        first_name={fake.first_name}
-        last_name={fake.last_name}
-        bio={fake.bio}
-        onClick={() => {}}
-      />
     </>
   );
 }
