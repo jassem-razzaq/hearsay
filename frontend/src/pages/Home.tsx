@@ -51,9 +51,11 @@ export default function Home() {
             <CardTitle className="text-xl font-bold mt-5">Your feed</CardTitle>
           </CardHeader>
           {feed.length > 0 ? (
-            <div className="grid lg:grid-cols-3 gap-5 justify-items-center">
-              {feed.map((review: FriendReview) => (
+            // <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-5 justify-items-center">
+            <div className="flex flex-row flex-wrap gap-5 justify-center">
+              {feed.map((review: FriendReview, i) => (
                 <FeedCard
+                  key={i}
                   review={{
                     id: review.id,
                     username: review.username,

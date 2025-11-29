@@ -46,7 +46,7 @@ export default function FeedCard({ review }: FeedCardProps) {
   const navigate = useNavigate();
   return (
     <>
-      <Card className="w-100 hover:scale-102 duration-150">
+      <Card className="w-100 hover:scale-102 duration-150 shrink-0">
         <CardHeader>
           <div className="flex justify-between">
             <div className="flex gap-2">
@@ -74,17 +74,20 @@ export default function FeedCard({ review }: FeedCardProps) {
                 alt={review.podcastName}
                 onClick={() => navigate(`/podcasts/${review.podcastId}`)}
               />
-              <div className="mt-3">
-                <p
-                  className="font-bold cursor-pointer hover:underline"
-                  onClick={() => navigate(`/podcasts/${review.podcastId}`)}
-                >
-                  {review.podcastName}
-                </p>
-                <p className="italic text-sm">{review.type === "episode" && review.episodeName}</p>
+              <div className="mt-3 flex flex-col">
+                <span>
+                  <span
+                    className="font-bold cursor-pointer hover:underline"
+                    onClick={() => navigate(`/podcasts/${review.podcastId}`)}
+                  >
+                    {review.podcastName}
+                  </span>
+                </span>
+                <span className="italic text-sm">{review.type === "episode" && review.episodeName}</span>
                 <div className="flex flex-col mt-4 gap-1">
-                  <p className="font-semibold">{review.comment}</p>
-                  <p className="text-xs text-gray-400">{dateFormat(review.createdAt)}</p>
+                  <span className="text-xs text-gray-400 italic">{review.firstName + " wrote"}</span>
+                  <span className="font-semibold">{review.comment}</span>
+                  <span className="text-xs text-gray-400">{dateFormat(review.createdAt)}</span>
                 </div>
               </div>
             </CardContent>
