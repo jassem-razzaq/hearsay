@@ -1,3 +1,16 @@
+import { CircleX } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
+import minimalistAvatarM from "../assets/minimalistAvatarM.jpg";
+
 type UserCardProps = {
   id: string;
   username: string;
@@ -16,8 +29,31 @@ export default function UserCard({
   onClick,
 }: UserCardProps) {
   return (
-    <div className="bg-purple-900 cursor-pointer" onClick={onClick}>
-      {username}
+    <div className="flex w-full max-w-lg flex-col gap-6 cursor-pointer">
+      <Item variant="outline" onClick={onClick}>
+        <ItemMedia>
+          <Avatar className="size-10">
+            <AvatarImage src={minimalistAvatarM} />
+            <AvatarFallback>ER</AvatarFallback>
+          </Avatar>
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle>{username}</ItemTitle>
+          <ItemDescription className="break-all">{bio}</ItemDescription>
+        </ItemContent>
+        <ItemActions>
+          {/* Stop propation thingy here so it doesn't navigate to user instead (or both)
+          <Button
+            size="icon-sm"
+            variant="outline"
+            className="rounded-full"
+            aria-label="Remove friend"
+          >
+            <CircleX />
+          </Button>
+          */}
+        </ItemActions>
+      </Item>
     </div>
   );
 }
