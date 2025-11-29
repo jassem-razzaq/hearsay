@@ -1,9 +1,7 @@
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -50,12 +48,20 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         <CardHeader>
           <div className="flex justify-between">
             <div className="flex gap-2">
-              <Avatar className="w-9 h-9 cursor-pointer" onClick={() => navigate(`/users/${review.id}`)}>
+              <Avatar
+                className="w-9 h-9 cursor-pointer"
+                onClick={() => navigate(`/users/${review.id}`)}
+              >
                 <AvatarImage src={avatar} alt={review.username} />
-                <AvatarFallback>{review.firstName[0] + review.lastName[0]}</AvatarFallback>
+                <AvatarFallback>
+                  {review.firstName[0] + review.lastName[0]}
+                </AvatarFallback>
               </Avatar>
               <div className="flex flex-col gap-1">
-                <CardTitle className="cursor-pointer hover:underline" onClick={() => navigate(`/users/${review.id}`)}>
+                <CardTitle
+                  className="cursor-pointer hover:underline"
+                  onClick={() => navigate(`/users/${review.id}`)}
+                >
                   {review.firstName + " " + review.lastName}
                 </CardTitle>
                 <CardDescription>{"@" + review.username}</CardDescription>
@@ -83,11 +89,17 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                     {review.podcastName}
                   </span>
                 </span>
-                <span className="italic text-sm">{review.type === "episode" && review.episodeName}</span>
+                <span className="italic text-sm">
+                  {review.type === "episode" && review.episodeName}
+                </span>
                 <div className="flex flex-col mt-4 gap-1">
-                  <span className="text-xs text-gray-400 italic">{review.firstName + " wrote"}</span>
+                  <span className="text-xs text-gray-400 italic">
+                    {review.firstName + " wrote"}
+                  </span>
                   <span className="font-semibold">{review.comment}</span>
-                  <span className="text-xs text-gray-400">{dateFormat(review.createdAt)}</span>
+                  <span className="text-xs text-gray-400">
+                    {dateFormat(review.createdAt)}
+                  </span>
                 </div>
               </div>
             </CardContent>

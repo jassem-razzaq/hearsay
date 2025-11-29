@@ -205,7 +205,7 @@ async def getUserReviews(user_id: int):
     try:
         with db_cursor() as cursor:
             cursor.callproc("get_user_podcast_reviews", (user_id,))
-            return cursor.fetchall()
+            return convertListKeyToCamel(cursor.fetchall())
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)
@@ -217,7 +217,7 @@ async def getUserReviews(user_id: int):
     try:
         with db_cursor() as cursor:
             cursor.callproc("get_user_episode_reviews", (user_id,))
-            return cursor.fetchall()
+            return convertListKeyToCamel(cursor.fetchall())
     except pymysql.err.OperationalError as e:
         error_code, message = e.args
         raise HTTPException(status_code=400, detail=message)

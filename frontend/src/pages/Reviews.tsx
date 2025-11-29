@@ -4,21 +4,28 @@ import ReviewCard from "../components/ReviewCard";
 import { LoginContext } from "../contexts/LoginContext";
 
 type PodcastReview = {
+  id: string;
   username: string;
-  podcast_name: string;
+  firstName: string;
+  lastName: string;
+  podcastId: string;
+  podcastName: string;
   rating: string;
   comment: string;
-  created_at: string;
+  createdAt: string;
+  onClick: () => void;
 };
 
 type EpisodeReview = PodcastReview & {
-  episode_num: string;
+  episodeNum: string;
 };
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 export default function Reviews() {
   const { loggedIn, userID } = useContext(LoginContext);
   const urlID = useParams().userID;
+  const navigate = useNavigate();
+
   const [podcastReviews, setPodcastReviews] = useState<PodcastReview[]>([]);
   const [episodeReviews, setEpisodeReviews] = useState<EpisodeReview[]>([]);
 
@@ -48,18 +55,22 @@ export default function Reviews() {
           <ReviewCard
             key={i}
             review={{
+              id: review.id,
               type: "podcast",
               username: review.username,
-              podcastName: review.podcast_name,
+              firstName: review.firstName,
+              lastName: review.lastName,
+              podcastId: review.podcastId,
+              podcastName: review.podcastName,
               rating: review.rating,
               comment: review.comment,
-              createdAt: review.created_at,
-              onClick: () => {},
+              createdAt: review.createdAt,
+              onClick: () => navigate(`/users/${review.id}`),
             }}
           />
         ))}
       </div>
-      <div>
+      {/* <div>
         Episode Reviews:
         {(episodeReviews as EpisodeReview[]).map((review, i) => (
           <ReviewCard
@@ -67,16 +78,16 @@ export default function Reviews() {
             review={{
               type: "episode",
               username: review.username,
-              podcastName: review.podcast_name,
-              episodeNum: review.episode_num,
+              podcastName: review.podcastName,
+              episodeNum: review.episodeNum,
               rating: review.rating,
               comment: review.comment,
-              createdAt: review.created_at,
+              createdAt: review.createdAt,
               onClick: () => {},
             }}
           />
         ))}
-      </div>
+      </div> */}
     </>
   );
 }
