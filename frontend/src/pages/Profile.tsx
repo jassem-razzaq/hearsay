@@ -9,22 +9,35 @@ import Reviews from "./Reviews";
 import UserBio from "@/components/UserBio";
 import FriendsList from "@/components/FriendsList";
 
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { UserRoundPlus } from "lucide-react";
+import { DropDownTest } from "@/components/DropDownTest";
+
 type DisplayType = "reviews" | "playlists";
 
 type User = {
   id: string;
   username: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   bio: string;
 };
 
 type Friend = {
   id: string;
-  date_added: string;
+  dateAdded: string;
   username: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   bio: string;
 };
 
@@ -97,10 +110,10 @@ export default function Profile() {
       const data = await response.json();
       const mapped: Friend[] = data.map((row: any) => ({
         id: String(row.id),
-        date_added: row.date_added,
+        dateAdded: row.dateAdded,
         username: row.username,
-        first_name: row.first_name,
-        last_name: row.last_name,
+        firstName: row.firstName,
+        lastName: row.lastName,
         bio: row.bio,
       }));
       setFriends(mapped);
@@ -372,40 +385,50 @@ export default function Profile() {
   // Guard profile
   if (!profile) return null;
 
-  // test data
-  const fake: User = {
-    id: "1",
-    username: "fake-chan",
-    first_name: "Fake",
-    last_name: "Chan",
-    bio: "Hi I'm fake chan REEEEEEEEEEE",
-  };
-
   return (
     <>
+      <Card className="w-full max-w-sm m-10">
+        <CardHeader>
+          <CardAction></CardAction>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-start">
+            <img
+              src={minimalistAvatarM}
+              className="w-24 h-24 m-4 rounded-full border-4 border-purple-500"
+            ></img>
+            <CardTitle className="text-xl mr-4">{profile.username}</CardTitle>
+            {relationship === "none" && loggedIn && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSendRequest(urlID);
+                }}
+              >
+                <UserRoundPlus />
+                <span className="sr-only">Update bio</span>
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center justify-start">
+            <CardDescription className="ml-4 mr-4">
+              {profile.bio}
+            </CardDescription>
+            {userID === urlID && (
+              <UserBio
+                bio={bio}
+                onBioChange={setBio}
+                onConfirm={handleUpdateBio}
+              />
+            )}
+          </div>
+        </CardContent>
+        <CardFooter className="flex-col gap-2"></CardFooter>
+      </Card>
+
       <div>
-        <img
-          src={minimalistAvatarM}
-          className="w-48 h-48 rounded-full border-4 border-purple-500"
-        ></img>
-        <h1>{profile.username}</h1>
-        <p>{profile.bio}</p>
-        {userID === urlID && (
-          <UserBio bio={bio} onBioChange={setBio} onConfirm={handleUpdateBio} />
-        )}
-      </div>
-      <div>
-        {relationship === "none" && loggedIn && (
-          <button
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSendRequest(urlID);
-            }}
-          >
-            Add Friend
-          </button>
-        )}
         {relationship === "received" && (
           <>
             <button
