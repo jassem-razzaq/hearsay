@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserRoundPlus } from "lucide-react";
+import { DropDownTest } from "@/components/DropDownTest";
 
 type DisplayType = "reviews" | "playlists";
 
@@ -510,7 +511,7 @@ export default function Profile() {
           Create
         </button>
       )}
-      {/* {displayType === "reviews" && <Reviews />} */}
+      {displayType === "reviews" && <Reviews />}
       {displayType === "playlists" && (
         <Playlists
           playlists={playlists}
