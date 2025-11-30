@@ -599,7 +599,7 @@ BEGIN
         SET MESSAGE_TEXT = "Podcast not found";
     END IF;
     
-    SELECT name, description, release_date, GROUP_CONCAT(genre_name) FROM podcast 
+    SELECT name, description, release_date, GROUP_CONCAT(genre_name) AS genres FROM podcast 
     JOIN genre_to_podcast ON podcast.podcast_id = genre_to_podcast.podcast_id
     WHERE podcast.podcast_id = podcast_id_p
     GROUP BY podcast.podcast_id;
