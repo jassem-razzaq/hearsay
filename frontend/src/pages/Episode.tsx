@@ -105,6 +105,7 @@ export default function Episode() {
   });
   const [newPlaylistName, setnewPlaylistName] = useState<string>("");
   const [createPlaylistPopUp, setCreatePlaylistPopUp] = useState<boolean>(false);
+  const [reviewPopUp, setReviewPopUp] = useState<boolean>(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -206,7 +207,7 @@ export default function Episode() {
         },
         body: JSON.stringify({
           rating: formReview.rating,
-          comment: formReview.comment,
+          comment: formReview.comment ?? "",
         }),
       });
       const data = await response.json();
@@ -214,11 +215,17 @@ export default function Episode() {
         toast.error(data.detail);
         return;
       }
-      setActiveModal(null);
       setUserReview({
         rating: formReview.rating,
         comment: formReview.comment,
-        createdAt: Date.now().toString(),
+        createdAt: new Date().toISOString().split("T")[0],
+      });
+      setReviewPopUp(false);
+      toast.success("Review Submitted!");
+      confetti({
+        particleCount: 125,
+        spread: 180,
+        startVelocity: 40,
       });
       fetchEpisodeRatings();
     } catch (error) {
@@ -241,7 +248,7 @@ export default function Episode() {
         },
         body: JSON.stringify({
           rating: formReview.rating,
-          comment: formReview.comment,
+          comment: formReview.comment ?? "",
         }),
       });
       const data = await response.json();
@@ -249,15 +256,15 @@ export default function Episode() {
         toast.error(data.detail);
         return;
       }
-      setActiveModal(null);
       setUserReview({
         rating: formReview.rating,
         comment: formReview.comment,
         createdAt: new Date().toISOString().split("T")[0],
       });
+      toast.success("Review Updated!");
       fetchEpisodeRatings();
     } catch (error) {
-      console.log("Failed to update user's podcast review", error);
+      console.log("Failed to update user's episode review", error);
     }
   }
 
@@ -274,11 +281,12 @@ export default function Episode() {
       if (!response.ok) {
         toast.error(data.detail);
       }
-      setActiveModal(null);
       setUserReview(null);
       setFormReview({ rating: "", comment: "" });
+      toast.success("Review Deleted!");
+      fetchEpisodeRatings();
     } catch (error) {
-      console.log("Failed to delete the user's podcast review", error);
+      console.log("Failed to delete the user's episode review", error);
     }
   }
 
@@ -377,13 +385,13 @@ export default function Episode() {
                 <DialogHeader>
                   <DialogTitle className="mb-4">Select a Playlist</DialogTitle>
                   <DialogDescription></DialogDescription>
-                  <div className="max-h-[50vh] overflow-scroll">
+                  <div className="max-h-[50vh] overflow-scroll flex flex-col gap-3">
                     {playlists.map((playlist) => (
                       <Item key={playlist.name} className="flex justify-between" variant="outline">
                         <ItemTitle className="text-md">{playlist.name}</ItemTitle>
                         <ItemActions>
                           <Button
-                            className="text-xl w-8 h-8 bg-transparent border rounded-full"
+                            className="text-xl w-8 h-8 bg-transparent border rounded-full cursor-pointer"
                             onClick={() => handleAddToPlaylist(playlist.name)}
                           >
                             +
@@ -414,6 +422,129 @@ export default function Episode() {
             </Dialog>
           </div>
         </div>
+      </Card>
+
+      <Card className="flex flex-col bg-background border-none shadow-none px-5">
+        <div className="flex flex-row justify-between">
+          <CardTitle className="text-xl font-bold">Ratings</CardTitle>
+          {loggedIn && userReview?.rating ? (
+            <div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <RainbowButton className="hover:scale-102 duration-175" disabled={!loggedIn}>
+                    Update Review
+                  </RainbowButton>
+                </DialogTrigger>
+
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="text-xl">Update Review</DialogTitle>
+                    <DialogDescription>
+                      Your last review written on {dateFormat(userReview.createdAt)}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form className="flex flex-col gap-5" onSubmit={(e) => handleUpdateReview(e)}>
+                    <Label className="font-medium">Rating</Label>
+                    <Rating
+                      className="flex justify-center"
+                      defaultValue={Number(userReview.rating)}
+                      onValueChange={(value) => {
+                        setFormReview({ ...formReview, rating: value.toString() });
+                      }}
+                    >
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <RatingButton key={i} size={32} />
+                      ))}
+                    </Rating>
+                    <Label className="font-medium">Comment</Label>
+                    <Textarea
+                      value={formReview.comment}
+                      placeholder="Add an optional comment"
+                      onChange={(e) => setFormReview({ ...formReview, comment: e.target.value })}
+                    ></Textarea>
+                    <div className="flex flex-row items-center justify-between">
+                      <DialogClose asChild>
+                        <Button
+                          type="button"
+                          className="cursor-pointer hover:scale-102 duration-150"
+                          onClick={handleDeleteReview}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </Button>
+                      </DialogClose>
+                      <DialogClose asChild>
+                        <Button className="cursor-pointer hover:scale-102 duration-150" type="submit">
+                          Update
+                        </Button>
+                      </DialogClose>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          ) : (
+            <div className="flex justify-end">
+              <Dialog open={reviewPopUp} onOpenChange={setReviewPopUp}>
+                <DialogTrigger asChild>
+                  <RainbowButton className="hover:scale-102 duration-175" disabled={!loggedIn}>
+                    Review
+                  </RainbowButton>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="text-xl">Review</DialogTitle>
+                    <DialogDescription>What do you think of this podcast?</DialogDescription>
+                  </DialogHeader>
+                  <form className="flex flex-col gap-5" onSubmit={(e) => handleCreateReview(e)}>
+                    <Label className="font-medium">Rating</Label>
+                    <Rating
+                      className="flex justify-center"
+                      onValueChange={(value) => {
+                        setFormReview({ ...formReview, rating: value.toString() });
+                      }}
+                    >
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <RatingButton key={i} size={32} />
+                      ))}
+                    </Rating>
+                    <Label className="font-medium">Comment</Label>
+                    <Textarea
+                      placeholder="Add an optional comment"
+                      onChange={(e) => setFormReview({ ...formReview, comment: e.target.value })}
+                    />
+                    <div className="flex justify-end">
+                      <Button type="submit" className="self-start cursor-pointer hover:scale-102 duration-150">
+                        Submit
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+        </div>
+
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 px-5">
+          <Card className="hover:scale-98 duration-300 hover:shadow-lg">
+            <CardContent className="flex flex-col items-center justify-center h-20 gap-3">
+              <p className="text-md font-medium text-center">Average Rating</p>
+              <div className="flex flex-row items-center gap-2">
+                <p className="text-3xl font-bold">{ratings.globalAvgRating}</p>
+                <FontAwesomeIcon icon={faStar} className="text-xl" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:scale-98 duration-300 hover:shadow-lg">
+            <CardContent className="flex flex-col items-center justify-center h-20 gap-3">
+              <p className="text-md font-medium text-center">What your friends think</p>
+              <div className="flex flex-row items-center gap-2">
+                <p className="text-3xl font-bold">{ratings.friendsAvgRating}</p>
+                <FontAwesomeIcon icon={faStar} className="text-xl" />
+              </div>
+            </CardContent>
+          </Card>
+        </CardContent>
       </Card>
 
       <div>global review: {ratings.globalAvgRating}</div>
