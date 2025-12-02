@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { UserRoundPlus } from "lucide-react";
 import { DropDownTest } from "@/components/DropDownTest";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type DisplayType = "reviews" | "playlists";
 
@@ -57,7 +58,6 @@ export default function Profile() {
   const urlID = useParams().userID;
   const { loggedIn, userID, token } = useContext(LoginContext);
   const [refreshtoken, setRefreshToken] = useState<number>(0);
-  const [displayType, setDisplayType] = useState<DisplayType>("reviews");
   // User states
   const [profile, setProfile] = useState<User | null>(null);
   const [bio, setBio] = useState<string>("");
@@ -388,6 +388,8 @@ export default function Profile() {
   return (
     <>
       <div className="flex flex-col justify-center ml-30 mr-30 mt-5">
+        {/* bg-linear-to-br from-fuchsia-300 to-purple-800 
+        bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400*/}
         <div className="pr-2 pl-2 pb-2 pt-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 rounded-lg">
           <Card className="">
             <CardContent className="flex flex-col justify-center">
@@ -490,91 +492,58 @@ export default function Profile() {
                 </div>
               </div>
             </div>
-            {/* <CardFooter className="flex-row gap-2">
-              <div>
-                {relationship === "received" && (
-                  <>
-                    <button
-                      className="bg-green-500 hover:bg-green-700 text-white font-bold py-.5 px-1 rounded"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (urlID) {
-                          handleAcceptRequest(urlID, userID, null);
-                        }
-                      }}
-                    >
-                      Accept Request
-                    </button>
-                    <button
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-.5 px-1 rounded"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (urlID) {
-                          handleRejectRequest(urlID, userID, null);
-                        }
-                      }}
-                    >
-                      Reject Request
-                    </button>
-                  </>
-                )}
-              </div>
-            </CardFooter> */}
           </Card>
         </div>
-        <select
-          value={displayType}
-          onChange={(e) => setDisplayType(e.target.value as DisplayType)}
-        >
-          <option value={"reviews"}>Reviews</option>
-          <option value={"playlists"}>Playlists</option>
-        </select>
-        <div className="flex justify-end">
-          <DropDownTest />
-        </div>
-
-        {loggedIn && userID === urlID && displayType === "playlists" && (
-          <button
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-            onClick={
-              activeModal !== "create"
-                ? () => setActiveModal("create")
-                : () => setActiveModal(null)
-            }
-          >
-            Create
-          </button>
-        )}
-        {displayType === "reviews" && <Reviews />}
-        {displayType === "playlists" && (
-          <Playlists
-            playlists={playlists}
-            onPlaylistDelete={handlePlaylistDelete}
-          />
-        )}
-        {activeModal === "create" && (
-          <div className="bg-purple-900 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <form className="flex flex-col" onSubmit={handlePlaylistCreate}>
-              <label>Name of new playlist</label>
-              <input
-                type="text"
-                onChange={(e) => setPlaylistName(e.target.value)}
-                placeholder="Title..."
-              ></input>
-              <input
-                type="text"
-                onChange={(e) => setPlaylistDesc(e.target.value)}
-                placeholder="Description..."
-              ></input>
+        <Tabs defaultValue="reviews" className="w-[400px]">
+          <TabsList>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            <TabsTrigger value="playlists">Playlists</TabsTrigger>
+          </TabsList>
+          <TabsContent value="reviews">
+            <Reviews />
+          </TabsContent>
+          <TabsContent value="playlists">
+            {loggedIn && userID === urlID && (
               <button
-                type="submit"
                 className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                onClick={
+                  activeModal !== "create"
+                    ? () => setActiveModal("create")
+                    : () => setActiveModal(null)
+                }
               >
-                Confirm
+                Create
               </button>
-            </form>
-          </div>
-        )}
+            )}
+            <Playlists
+              playlists={playlists}
+              onPlaylistDelete={handlePlaylistDelete}
+            />
+            {activeModal === "create" && (
+              <div className="bg-purple-900 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <form className="flex flex-col" onSubmit={handlePlaylistCreate}>
+                  <label>Name of new playlist</label>
+                  <input
+                    type="text"
+                    onChange={(e) => setPlaylistName(e.target.value)}
+                    placeholder="Title..."
+                  ></input>
+                  <input
+                    type="text"
+                    onChange={(e) => setPlaylistDesc(e.target.value)}
+                    placeholder="Description..."
+                  ></input>
+                  <button
+                    type="submit"
+                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                  >
+                    Confirm
+                  </button>
+                </form>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );
