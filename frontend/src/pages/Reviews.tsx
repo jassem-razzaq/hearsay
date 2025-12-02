@@ -18,6 +18,7 @@ type PodcastReview = {
 
 type EpisodeReview = PodcastReview & {
   episodeNum: string;
+  episodeName: string;
 };
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
@@ -70,15 +71,20 @@ export default function Reviews() {
           />
         ))}
       </div>
-      {/* <div>
+      <div>
         Episode Reviews:
         {(episodeReviews as EpisodeReview[]).map((review, i) => (
           <ReviewCard
             key={i}
             review={{
               type: "episode",
+              id: review.id,
+              firstName: review.firstName,
+              lastName: review.lastName,
               username: review.username,
+              podcastId: review.podcastId,
               podcastName: review.podcastName,
+              episodeName: review.episodeName,
               episodeNum: review.episodeNum,
               rating: review.rating,
               comment: review.comment,
@@ -87,7 +93,7 @@ export default function Reviews() {
             }}
           />
         ))}
-      </div> */}
+      </div>
     </>
   );
 }
