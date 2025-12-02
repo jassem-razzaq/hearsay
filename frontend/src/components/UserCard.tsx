@@ -20,7 +20,7 @@ export default function UserCard({ username, bio, onClick }: UserCardProps) {
     <div className="flex ml-30 mr-30 flex-col gap-6">
       <Item
         variant="outline"
-        className="w-full cursor-pointer hover:scale-102 duration-150 active:scale-98"
+        className="w-full cursor-pointer transition-transform hover:scale-102 active:scale-98 duration-150"
         onClick={onClick}
       >
         <ItemMedia>
