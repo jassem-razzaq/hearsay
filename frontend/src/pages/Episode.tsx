@@ -3,12 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { LoginContext } from "../contexts/LoginContext";
 import ReviewCard from "../components/ReviewCard";
 import PlaylistCard from "../components/PlaylistCard";
+import { toast } from "sonner";
 
 type ActiveModal = "createReview" | "updateReview" | "playlists" | null;
 
 type EpisodeRating = {
-  globalEpisodeAvgRating: string;
-  friendsEpisodeAvgRating: string;
+  globalAvgRating: string;
+  friendsAvgRating: string;
 };
 
 type FriendReview = {
@@ -22,13 +23,16 @@ type FriendReview = {
 };
 
 type EpisodeInfo = {
+  episodeNum: string;
+  name: string;
   description: string;
   duration: string;
-  name: string;
   releaseDate: string;
+  podcastId: string;
 };
 
 type Playlist = {
+  userId: string;
   name: string;
   description: string;
 };
@@ -41,33 +45,21 @@ type UserReview = {
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
-function convertToCamelCase(data: Record<string, string>[]): FriendReview[] {
-  return data.map((review) => {
-    return {
-      id: review.id,
-      rating: review.rating,
-      comment: review.comment,
-      createdAt: review.created_at,
-      username: review.username,
-      firstName: review.first_name,
-      lastName: review.last_name,
-    };
-  });
-}
-
 export default function Episode() {
   const podcastID = useParams().podcastID;
   const episodeNum = useParams().episodeNum;
   const { loggedIn, userID, token } = useContext(LoginContext);
   const [episodeInfo, setEpisodeInfo] = useState<EpisodeInfo>({
+    episodeNum: "",
     description: "",
     duration: "",
     name: "",
     releaseDate: "",
+    podcastId: "",
   });
   const [ratings, setRatings] = useState<EpisodeRating>({
-    globalEpisodeAvgRating: "",
-    friendsEpisodeAvgRating: "",
+    globalAvgRating: "",
+    friendsAvgRating: "",
   });
   const [friendReviews, setFriendReviews] = useState<FriendReview[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -80,19 +72,19 @@ export default function Episode() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!userID) return;
+    if (loggedIn) return;
+    fetchEpisodeInfo();
+    fetchEpisodeRatings();
+    setRatings((prevRatings) => ({
+      ...prevRatings,
+      friendsAvgRating: "",
+    }));
+    setUserReview(null);
+    setFriendReviews([]);
+  }, []);
 
-    async function fetchEpisodeInfo() {
-      try {
-        const response = await fetch(
-          `${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}`
-        );
-        const data = await response.json();
-        setEpisodeInfo(data);
-      } catch (error) {
-        console.error("Failed to fetch episode info", error);
-      }
-    }
+  useEffect(() => {
+    if (!loggedIn) return;
 
     async function fetchFriendReviews() {
       if (!loggedIn) return;
@@ -101,7 +93,7 @@ export default function Episode() {
           `${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/reviews/${userID}/friends`
         );
         const data = await response.json();
-        setFriendReviews(convertToCamelCase(data));
+        setFriendReviews(data);
       } catch (error) {
         console.error("Failed to fetch user's friends episode review", error);
       }
@@ -110,9 +102,7 @@ export default function Episode() {
     async function fetchUserReview() {
       if (!loggedIn) return;
       try {
-        const response = await fetch(
-          `${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/reviews/${userID}`
-        );
+        const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/reviews/${userID}`);
         const data: UserReview = await response.json();
         if (data) {
           setFormReview({ rating: data.rating, comment: data.comment });
@@ -127,26 +117,32 @@ export default function Episode() {
     fetchEpisodeRatings();
     fetchFriendReviews();
     fetchUserReview();
-  }, [userID]);
+  }, [loggedIn]);
+
+  async function fetchEpisodeInfo() {
+    try {
+      const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}`);
+      const data = await response.json();
+      setEpisodeInfo(data);
+    } catch (error) {
+      console.error("Failed to fetch episode info", error);
+    }
+  }
 
   async function fetchEpisodeRatings() {
     try {
-      let response = await fetch(
-        `${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/ratings`
-      );
+      let response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/ratings`);
       let data = await response.json();
       setRatings((prevRatings) => ({
         ...prevRatings,
-        globalEpisodeAvgRating: data.global_episode_avg_rating,
+        globalAvgRating: data.globalEpisodeAvgRating,
       }));
       if (loggedIn) {
-        response = await fetch(
-          `${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/ratings/${userID}`
-        );
+        response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/ratings/${userID}`);
         data = await response.json();
         setRatings((prevRatings) => ({
           ...prevRatings,
-          friendsEpisodeAvgRating: data.friends_episode_avg_rating,
+          friendsAvgRating: data.friendsEpisodeAvgRating,
         }));
       }
     } catch (error) {
@@ -161,28 +157,25 @@ export default function Episode() {
   async function handleCreateReview(e: React.FormEvent) {
     e.preventDefault();
     if (!formReview.rating) {
-      alert("Every review needs a rating!");
+      toast.error("Every review needs a rating!");
       return;
     }
 
     try {
-      const response = await fetch(
-        `${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/reviews/${userID}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            rating: formReview.rating,
-            comment: formReview.comment,
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/reviews/${userID}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rating: formReview.rating,
+          comment: formReview.comment,
+        }),
+      });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.detail);
+        toast.error(data.detail);
         return;
       }
       setActiveModal(null);
@@ -200,34 +193,31 @@ export default function Episode() {
   async function handleUpdateReview(e: React.FormEvent) {
     e.preventDefault();
     if (!formReview.rating) {
-      alert("Every review needs a rating!");
+      toast.error("Every review needs a rating!");
       return;
     }
     try {
-      const response = await fetch(
-        `${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/reviews/${userID}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            rating: formReview.rating,
-            comment: formReview.comment,
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/reviews/${userID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rating: formReview.rating,
+          comment: formReview.comment,
+        }),
+      });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.detail);
+        toast.error(data.detail);
         return;
       }
       setActiveModal(null);
       setUserReview({
         rating: formReview.rating,
         comment: formReview.comment,
-        createdAt: Date.now().toString(),
+        createdAt: new Date().toISOString().split("T")[0],
       });
       fetchEpisodeRatings();
     } catch (error) {
@@ -237,51 +227,22 @@ export default function Episode() {
 
   async function handleDeleteReview() {
     try {
-      const response = await fetch(
-        `${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/reviews/${userID}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/episodes/${episodeNum}/reviews/${userID}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       if (!response.ok) {
-        console.log(data.detail);
+        toast.error(data.detail);
       }
       setActiveModal(null);
       setUserReview(null);
       setFormReview({ rating: "", comment: "" });
     } catch (error) {
       console.log("Failed to delete the user's podcast review", error);
-    }
-  }
-
-  async function handleAddToPlaylist(playlistName: string) {
-    try {
-      const response = await fetch(
-        `${API_URL_BASE}/users/${userID}/playlists/${playlistName}/episodes`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            podcast_id: podcastID,
-            episode_num: episodeNum,
-          }),
-        }
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        alert(data.detail);
-        return;
-      }
-    } catch (error) {
-      console.error("Failed to add episode to playlist", error);
     }
   }
 
@@ -295,19 +256,37 @@ export default function Episode() {
     }
   }
 
+  async function handleAddToPlaylist(playlistName: string) {
+    try {
+      const response = await fetch(`${API_URL_BASE}/users/${userID}/playlists/${playlistName}/episodes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          podcast_id: podcastID,
+          episode_num: episodeNum,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.detail);
+        return;
+      }
+    } catch (error) {
+      console.error("Failed to add episode to playlist", error);
+    }
+  }
+
   return (
     <>
-      <div>global review: {ratings.globalEpisodeAvgRating}</div>
-      {loggedIn && <div>friends review: {ratings.friendsEpisodeAvgRating}</div>}
+      <div>global review: {ratings.globalAvgRating}</div>
+      {loggedIn && <div>friends review: {ratings.friendsAvgRating}</div>}
       {loggedIn && userReview ? (
-        <button onClick={() => setActiveModal("updateReview")}>
-          Update review
-        </button>
+        <button onClick={() => setActiveModal("updateReview")}>Update review</button>
       ) : (
-        <button
-          disabled={!loggedIn}
-          onClick={() => setActiveModal("createReview")}
-        >
+        <button disabled={!loggedIn} onClick={() => setActiveModal("createReview")}>
           Review
         </button>
       )}
@@ -323,17 +302,18 @@ export default function Episode() {
       </button>
       {loggedIn && friendReviews.length > 0 ? (
         friendReviews.map((review) => (
-          <ReviewCard
-            review={{
-              type: "podcast",
-              username: review.username,
-              podcastName: "",
-              rating: review.rating,
-              comment: review.comment,
-              createdAt: review.createdAt,
-              onClick: () => navigate(`/users/${review.id}`),
-            }}
-          ></ReviewCard>
+          // <ReviewCard
+          //   review={{
+          //     type: "podcast",
+          //     username: review.username,
+          //     podcastName: "",
+          //     rating: review.rating,
+          //     comment: review.comment,
+          //     createdAt: review.createdAt,
+          //     onClick: () => navigate(`/users/${review.id}`),
+          //   }}
+          // ></ReviewCard>
+          <div></div>
         ))
       ) : (
         <h1>Create an account to see friend reviews</h1>
@@ -341,24 +321,11 @@ export default function Episode() {
 
       {activeModal === "createReview" && (
         <div className="fixed bg-purple-300 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <form
-            className="flex flex-col"
-            onSubmit={(e) => handleCreateReview(e)}
-          >
+          <form className="flex flex-col" onSubmit={(e) => handleCreateReview(e)}>
             <label>Rating</label>
-            <input
-              type="number"
-              onChange={(e) =>
-                setFormReview({ ...formReview, rating: e.target.value })
-              }
-            ></input>
+            <input type="number" onChange={(e) => setFormReview({ ...formReview, rating: e.target.value })}></input>
             <label>Comment</label>
-            <input
-              type="text"
-              onChange={(e) =>
-                setFormReview({ ...formReview, comment: e.target.value })
-              }
-            ></input>
+            <input type="text" onChange={(e) => setFormReview({ ...formReview, comment: e.target.value })}></input>
             <button type="submit">Submit</button>
           </form>
         </div>
@@ -367,25 +334,18 @@ export default function Episode() {
       {activeModal === "updateReview" && (
         <div className="fixed bg-purple-300 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <div>Written on {userReview?.createdAt}</div>
-          <form
-            className="flex flex-col"
-            onSubmit={(e) => handleUpdateReview(e)}
-          >
+          <form className="flex flex-col" onSubmit={(e) => handleUpdateReview(e)}>
             <label>Rating</label>
             <input
               type="number"
               value={formReview.rating}
-              onChange={(e) =>
-                setFormReview({ ...formReview, rating: e.target.value })
-              }
+              onChange={(e) => setFormReview({ ...formReview, rating: e.target.value })}
             ></input>
             <label>Comment</label>
             <input
               type="text"
               value={formReview.comment}
-              onChange={(e) =>
-                setFormReview({ ...formReview, comment: e.target.value })
-              }
+              onChange={(e) => setFormReview({ ...formReview, comment: e.target.value })}
             ></input>
             <button type="submit">Update</button>
             <button type="button" onClick={handleDeleteReview}>
@@ -403,18 +363,11 @@ export default function Episode() {
               <div className="flex bg-blue-200">
                 <PlaylistCard
                   name={playlist.name}
-                  description={
-                    playlist.description
-                      ? playlist.description
-                      : "No description provided"
-                  }
+                  description={playlist.description ? playlist.description : "No description provided"}
                   onClick={() => {}}
                   onDelete={() => {}}
                 ></PlaylistCard>
-                <button
-                  className="cursor-pointer"
-                  onClick={() => handleAddToPlaylist(playlist.name)}
-                >
+                <button className="cursor-pointer" onClick={() => handleAddToPlaylist(playlist.name)}>
                   Add
                 </button>
               </div>
