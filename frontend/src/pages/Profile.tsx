@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserRoundPlus } from "lucide-react";
+import { DropDownTest } from "@/components/DropDownTest";
 
 type DisplayType = "reviews" | "playlists";
 
@@ -387,32 +388,39 @@ export default function Profile() {
   return (
     <>
       <div className="flex flex-col justify-center ml-30 mr-30 mt-5">
-        <Card className="bg-linear-to-br from-fuchsia-300 to-purple-800 pb-0">
-          <Card className="p-0">
-            <CardHeader>
-              <CardAction></CardAction>
-            </CardHeader>
-            <CardContent className="flex flex-col justify-center ">
+        <div className="pr-2 pl-2 pb-2 pt-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 rounded-lg">
+          <Card className="">
+            <CardContent className="flex flex-col justify-center">
               <div className="flex flex-row items-end">
                 <img
                   src={minimalistAvatarM}
                   className="w-48 h-48 rounded-full border-4 border-purple-500 mr-4"
                 ></img>
-                <CardTitle className="text-8xl font-bold">
-                  {profile.username}
-                </CardTitle>
+                <div>
+                  <CardTitle className="flex flex-row items-baseline text-8xl font-bold mb-4">
+                    {profile.username}
+                    <div className="text-lg ml-4">
+                      <span className="mr-1.5">{profile.firstName}</span>
+                      <span>{profile.lastName}</span>
+                    </div>
+                  </CardTitle>
+                  <div className="text-lg">
+                    <span>5 Reviews · 10 Playlists</span>
+                  </div>
+                  <div></div>
+                </div>
               </div>
             </CardContent>
             <div className="flex flex-row justify-start gap-4">
               {/* Bio and buttons cont */}
-              <CardDescription className="ml-8 min-w-46 max-w-52 min-h-20 max-h-20 overflow-auto">
+              <CardDescription className="ml-8 min-w-44 max-w-44 min-h-15 max-h-15 overflow-auto p-2">
                 {profile.bio !== null ? profile.bio : <span>No bio . . .</span>}
               </CardDescription>
-              <div className="flex flex-row items-center gap-4">
+              <div className="flex flex-row items-top gap-4 p-0">
                 {/* User buttons and lists */}
                 {relationship === "none" && loggedIn && (
                   <Button
-                    className="w-12 h-12"
+                    className="w-12"
                     variant="outline"
                     size="icon"
                     onClick={(e) => {
@@ -426,7 +434,7 @@ export default function Profile() {
                 )}
                 {relationship === "sent" && (
                   <Button
-                    className="w-12 h-12"
+                    className="w-12"
                     variant="outline"
                     size="icon"
                     disabled
@@ -482,7 +490,7 @@ export default function Profile() {
                 </div>
               </div>
             </div>
-            <CardFooter className="flex-row gap-2">
+            {/* <CardFooter className="flex-row gap-2">
               <div>
                 {relationship === "received" && (
                   <>
@@ -511,16 +519,19 @@ export default function Profile() {
                   </>
                 )}
               </div>
-              <select
-                value={displayType}
-                onChange={(e) => setDisplayType(e.target.value as DisplayType)}
-              >
-                <option value={"reviews"}>Reviews</option>
-                <option value={"playlists"}>Playlists</option>
-              </select>
-            </CardFooter>
+            </CardFooter> */}
           </Card>
-        </Card>
+        </div>
+        <select
+          value={displayType}
+          onChange={(e) => setDisplayType(e.target.value as DisplayType)}
+        >
+          <option value={"reviews"}>Reviews</option>
+          <option value={"playlists"}>Playlists</option>
+        </select>
+        <div className="flex justify-end">
+          <DropDownTest />
+        </div>
 
         {loggedIn && userID === urlID && displayType === "playlists" && (
           <button
