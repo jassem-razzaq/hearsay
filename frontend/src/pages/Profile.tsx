@@ -7,7 +7,13 @@ import * as React from "react";
 import ReviewCard from "@/components/ReviewCard";
 import UserBio from "@/components/UserBio";
 import FriendsList from "@/components/FriendsList";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -21,8 +27,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Trash2, UserRoundPlus } from "lucide-react";
+import { Plus, Trash2, UserRoundPlus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 type User = {
   id: string;
@@ -60,6 +68,7 @@ type EpisodeReview = PodcastReview & {
 };
 
 type Playlist = {
+  userId: string;
   name: string;
   description: string;
 };
@@ -68,11 +77,10 @@ type Episode = {
   podcastId: string;
   podcastName: string;
   episodeNum: string;
+  episodeName: string;
 };
 
 type Relationship = "friends" | "received" | "sent" | "none" | "self";
-
-type activeModal = "create" | null;
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
@@ -90,13 +98,17 @@ export default function Profile() {
   const [podcastReviews, setPodcastReviews] = useState<PodcastReview[]>([]);
   const [episodeReviews, setEpisodeReviews] = useState<EpisodeReview[]>([]);
   // Playlist states
-  const [activeModal, setActiveModal] = useState<activeModal>(null);
-  const [playlistName, setPlaylistName] = useState<string>("");
-  const [playlistDesc, setPlaylistDesc] = useState<string>("");
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [episodesByPlaylist, setEpisodesByPlaylist] = useState<
     Record<string, Episode[]>
   >({});
+  const [playlistForm, setPlaylistForm] = useState<Playlist>({
+    userId: "",
+    name: "",
+    description: "",
+  });
+  const [createPlaylistPopUp, setCreatePlaylistPopUp] =
+    useState<boolean>(false);
   // Friends states
   const [friends, setFriends] = useState<Friend[]>([]);
   const [pendingList, setPendingList] = useState<Friend[]>([]);
@@ -241,33 +253,39 @@ export default function Profile() {
   // Create playlist
   async function handlePlaylistCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!playlistName) {
-      alert("Please enter a playlist name");
+    if (playlistForm.name === "") {
+      toast.error("Enter a name for your new playlist!");
       return;
     }
+
     try {
       const response = await fetch(
-        `${API_URL_BASE}/users/${userID}/playlists/${playlistName}`,
+        `${API_URL_BASE}/users/${userID}/playlists/${playlistForm.name}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ description: playlistDesc }),
+          body: JSON.stringify({ description: playlistForm.description }),
         }
       );
+      const data = await response.json();
       if (!response.ok) {
-        console.error("Response not ok from create playlist");
-      } else {
-        const newPlaylist: Playlist = {
-          name: playlistName,
-          description: playlistDesc,
-        };
-        setPlaylists((prev) => [...prev, newPlaylist]);
+        toast.error(data.detail);
+        return;
       }
+      toast.success("Playlist created!");
+      const newPlaylist: Playlist = {
+        userId: userID,
+        name: playlistForm.name,
+        description: playlistForm.description,
+      };
+      setPlaylists((prev) => [...prev, newPlaylist]);
+      setPlaylistForm({ userId: "", name: "", description: "" });
+      setCreatePlaylistPopUp(false);
     } catch (error) {
-      console.error("Failed to create playlist", error);
+      console.error("Failed to add episode to playlist", error);
     }
   }
 
@@ -440,7 +458,6 @@ export default function Profile() {
     const data = await response.json();
     setEpisodesByPlaylist((prev) => {
       const next = { ...prev, [playlist]: data };
-      console.log(next);
       return next;
     });
   }
@@ -507,7 +524,10 @@ export default function Profile() {
                     </div>
                   </CardTitle>
                   <div className="text-lg">
-                    <span>5 Reviews · 10 Playlists</span>
+                    <span>
+                      {podcastReviews.length + episodeReviews.length} Reviews ·{" "}
+                      {playlists.length} Playlists
+                    </span>
                   </div>
                   <div></div>
                 </div>
@@ -522,7 +542,7 @@ export default function Profile() {
                 {/* User buttons and lists */}
                 {relationship === "none" && loggedIn && (
                   <Button
-                    className="w-12"
+                    className="w-12 hover:bg-primary! hover:text-primary-foreground!"
                     variant="outline"
                     size="icon"
                     onClick={(e) => {
@@ -536,7 +556,7 @@ export default function Profile() {
                 )}
                 {relationship === "sent" && (
                   <Button
-                    className="w-12"
+                    className="w-12 hover:bg-primary! hover:text-primary-foreground!"
                     variant="outline"
                     size="icon"
                     disabled
@@ -597,13 +617,24 @@ export default function Profile() {
           <div className="bg-card rounded-lg">
             <Tabs defaultValue="podcastReviews" className="w-max-full p-2">
               <TabsList>
-                <TabsTrigger value="podcastReviews">
+                <TabsTrigger
+                  value="podcastReviews"
+                  className="hover:bg-primary! hover:text-primary-foreground!"
+                >
                   Podcast Reviews
                 </TabsTrigger>
-                <TabsTrigger value="episodeReviews">
+                <TabsTrigger
+                  value="episodeReviews"
+                  className="hover:bg-primary! hover:text-primary-foreground!"
+                >
                   Episode Reviews
                 </TabsTrigger>
-                <TabsTrigger value="playlists">Playlists</TabsTrigger>
+                <TabsTrigger
+                  value="playlists"
+                  className="hover:bg-primary! hover:text-primary-foreground!"
+                >
+                  Playlists
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="podcastReviews">
                 <div className="flex flex-wrap justify-center gap-10 w-max-full">
@@ -652,34 +683,30 @@ export default function Profile() {
                 </div>
               </TabsContent>
               <TabsContent value="playlists">
-                {loggedIn && userID === urlID && (
-                  <button
-                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                    onClick={
-                      activeModal !== "create"
-                        ? () => setActiveModal("create")
-                        : () => setActiveModal(null)
-                    }
-                  >
-                    Create
-                  </button>
-                )}
                 <Accordion type="single" collapsible>
                   {playlists.map((playlist) => {
                     const episodes = episodesByPlaylist[playlist.name] ?? [];
                     return (
                       <AccordionItem
+                        className="m-2 p-2 rounded-lg bg-card"
                         value={playlist.name}
                         onClick={() => {
                           handlePlaylistClick(playlist.name);
                         }}
                       >
-                        <AccordionTrigger>
-                          <div>
-                            <div>{playlist.name}</div>
-                            <div>{playlist.description}</div>
+                        <AccordionTrigger className="hover:no-underline items-center">
+                          <div className="flex flex-row justify-between">
+                            <div className="flex flex-col">
+                              <div className="text-lg font-bold hover:underline">
+                                {playlist.name}
+                              </div>
+                              <div className="">{playlist.description}</div>
+                            </div>
+                            <div className=""></div>
+                          </div>
+                          {userID === urlID && (
                             <Button
-                              className="w-12"
+                              className="w-10 ml-auto hover:bg-primary! hover:text-primary-foreground!"
                               variant="outline"
                               size="icon"
                               onClick={(e) => {
@@ -689,71 +716,136 @@ export default function Profile() {
                             >
                               <Trash2 />
                             </Button>
-                          </div>
+                          )}
                         </AccordionTrigger>
-                        <AccordionContent>
+                        <AccordionContent className="">
                           <div>
-                            {(episodes as Episode[]).map((episode) => (
-                              <div
-                                key={episode.podcastId + episode.episodeNum}
-                                onClick={() =>
-                                  navigate(
-                                    `/podcasts/${episode.podcastId}/episodes/${episode.episodeNum}`
-                                  )
-                                }
-                              >
-                                <div>{episode.podcastName}</div>
-                                <div>{episode.episodeNum}</div>
-                                <Button
-                                  className="w-6"
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEpisodeDelete(
-                                      playlist.name,
-                                      episode.podcastId,
-                                      episode.episodeNum
-                                    );
-                                  }}
-                                >
-                                  <Trash2 />
-                                </Button>
+                            {episodes.length === 0 && (
+                              <div className="bg-card rounded-sm p-2 mt-2 mb-2">
+                                <h1 className="italic">Playlist is empty</h1>
                               </div>
-                            ))}
+                            )}
+                            {episodes.length !== 0 &&
+                              (episodes as Episode[]).map((episode) => (
+                                <div
+                                  className="flex flex-row mt-2 mb-2 p-2 items-center bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 
+                                   text-white transition-all duration-300 ease-in-out 
+                                   hover:from-purple-500 hover:via-pink-500 hover:to-orange-400 rounded-sm"
+                                  key={episode.podcastId + episode.episodeNum}
+                                  onClick={() =>
+                                    navigate(
+                                      `/podcasts/${episode.podcastId}/episodes/${episode.episodeNum}`
+                                    )
+                                  }
+                                >
+                                  <div className="flex flex-col">
+                                    <div className="font-bold text-lg">
+                                      {episode.episodeName}
+                                    </div>
+                                    <div className="flex flex-row">
+                                      {episode.podcastName}
+                                      <h1 className="ml-1 mr-1">
+                                        {" "}
+                                        · Episode:{" "}
+                                      </h1>
+                                      {episode.episodeNum}
+                                    </div>
+                                  </div>
+                                  {userID === urlID && (
+                                    <Button
+                                      className="w-10 ml-auto hover:bg-primary! hover:text-primary-foreground!"
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEpisodeDelete(
+                                          playlist.name,
+                                          episode.podcastId,
+                                          episode.episodeNum
+                                        );
+                                      }}
+                                    >
+                                      <Trash2 />
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
                           </div>
                         </AccordionContent>
                       </AccordionItem>
                     );
                   })}
+                  {userID === urlID && (
+                    <AccordionItem
+                      className="m-2 p-2 rounded-lg bg-card flex flex-row items-center gap-4"
+                      value={"createPlaylist"}
+                      onClick={() => setCreatePlaylistPopUp(true)}
+                    >
+                      <Button
+                        className="w-15 h-15 rounded-full hover:bg-primary! hover:text-primary-foreground!"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCreatePlaylistPopUp(true)}
+                      >
+                        <Plus />
+                      </Button>
+                      <div className="flex flex-row justify-start">
+                        <div className="flex flex-col">
+                          <div className="text-lg hover:underline">
+                            Create playlist
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionItem>
+                  )}
                 </Accordion>
 
-                {activeModal === "create" && (
-                  <div className="bg-purple-900 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <form
-                      className="flex flex-col"
-                      onSubmit={handlePlaylistCreate}
-                    >
-                      <label>Name of new playlist</label>
-                      <input
-                        type="text"
-                        onChange={(e) => setPlaylistName(e.target.value)}
-                        placeholder="Title..."
-                      ></input>
-                      <input
-                        type="text"
-                        onChange={(e) => setPlaylistDesc(e.target.value)}
-                        placeholder="Description..."
-                      ></input>
-                      <button
-                        type="submit"
-                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                      >
-                        Confirm
-                      </button>
-                    </form>
-                  </div>
-                )}
+                {
+                  <Dialog
+                    open={createPlaylistPopUp}
+                    onOpenChange={setCreatePlaylistPopUp}
+                  >
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>New Playlist</DialogTitle>
+                        <DialogDescription>
+                          Create your new playlist
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handlePlaylistCreate}>
+                        <DialogDescription className="font-medium mb-3">
+                          Playlist Name
+                        </DialogDescription>
+                        <Input
+                          type="text"
+                          maxLength={20}
+                          onChange={(e) =>
+                            setPlaylistForm({
+                              ...playlistForm,
+                              name: e.target.value,
+                            })
+                          }
+                        ></Input>
+                        <DialogDescription className="font-medium my-3">
+                          Add an optional description
+                        </DialogDescription>
+                        <Input
+                          type="text"
+                          maxLength={50}
+                          onChange={(e) =>
+                            setPlaylistForm({
+                              ...playlistForm,
+                              description: e.target.value,
+                            })
+                          }
+                        ></Input>
+                        <div className="flex justify-end mt-3">
+                          <Button type="submit">Create Playlist</Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                }
               </TabsContent>
             </Tabs>
           </div>
