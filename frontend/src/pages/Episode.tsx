@@ -103,7 +103,11 @@ export default function Episode() {
     rating: "",
     comment: "",
   });
-  const [newPlaylistName, setnewPlaylistName] = useState<string>("");
+  const [playlistForm, setPlaylistForm] = useState<Playlist>({
+    userId: "",
+    name: "",
+    description: "",
+  });
   const [createPlaylistPopUp, setCreatePlaylistPopUp] = useState<boolean>(false);
   const [reviewPopUp, setReviewPopUp] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -186,10 +190,6 @@ export default function Episode() {
       console.error("Failed to fetch episode ratings", error);
     }
   }
-
-  // useEffect(() => {
-  //   console.log(friendReviews);
-  // }, [ratings, friendReviews]);
 
   async function handleCreateReview(e: React.FormEvent) {
     e.preventDefault();
@@ -326,19 +326,19 @@ export default function Episode() {
 
   async function handleCreatePlaylist(e: React.FormEvent) {
     e.preventDefault();
-    if (newPlaylistName === "") {
+    if (playlistForm.name === "") {
       toast.error("Enter a name for your new playlist!");
       return;
     }
 
     try {
-      const response = await fetch(`${API_URL_BASE}/users/${userID}/playlists/${newPlaylistName}`, {
+      const response = await fetch(`${API_URL_BASE}/users/${userID}/playlists/${playlistForm.name}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ description: "" }),
+        body: JSON.stringify({ description: playlistForm.description }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -346,7 +346,7 @@ export default function Episode() {
         return;
       }
       toast.success("Playlist created!");
-      setnewPlaylistName("");
+      setPlaylistForm({ userId: "", name: "", description: "" });
       setCreatePlaylistPopUp(false);
       handlePlaylistSearch();
     } catch (error) {
@@ -412,11 +412,25 @@ export default function Episode() {
             <Dialog open={createPlaylistPopUp} onOpenChange={setCreatePlaylistPopUp}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Playlist Name</DialogTitle>
-                  <DialogDescription>Enter the name of your new playlist</DialogDescription>
+                  <DialogTitle>New Playlist</DialogTitle>
+                  <DialogDescription>Create your new playlist</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleCreatePlaylist}>
-                  <Input type="text" maxLength={20} onChange={(e) => setnewPlaylistName(e.target.value)}></Input>
+                  <DialogDescription className="font-medium mb-3">Playlist Name</DialogDescription>
+                  <Input
+                    type="text"
+                    maxLength={20}
+                    onChange={(e) => setPlaylistForm({ ...playlistForm, name: e.target.value })}
+                  ></Input>
+                  <DialogDescription className="font-medium my-3">Add an optional description</DialogDescription>
+                  <Input
+                    type="text"
+                    maxLength={50}
+                    onChange={(e) => setPlaylistForm({ ...playlistForm, description: e.target.value })}
+                  ></Input>
+                  <div className="flex justify-end mt-3">
+                    <Button type="submit">Create Playlist</Button>
+                  </div>
                 </form>
               </DialogContent>
             </Dialog>
@@ -424,6 +438,7 @@ export default function Episode() {
         </div>
       </Card>
 
+      {/* Ratings */}
       <Card className="flex flex-col bg-background border-none shadow-none px-5">
         <div className="flex flex-row justify-between">
           <CardTitle className="text-xl font-bold">Ratings</CardTitle>
