@@ -4,7 +4,8 @@ import { LoginContext } from "../contexts/LoginContext";
 import minimalistAvatarM from "../assets/minimalistAvatarM.jpg";
 import * as React from "react";
 
-import Playlists from "./Playlists";
+import PlaylistCard from "@/components/PlaylistCard";
+import EpisodeCard from "@/components/EpisodeCard";
 import ReviewCard from "@/components/ReviewCard";
 import UserBio from "@/components/UserBio";
 import FriendsList from "@/components/FriendsList";
@@ -59,6 +60,12 @@ type Playlist = {
   description: string;
 };
 
+type Episode = {
+  podcastId: string;
+  podcastName: string;
+  episodeNum: string;
+};
+
 type Relationship = "friends" | "received" | "sent" | "none" | "self";
 
 type activeModal = "create" | null;
@@ -70,6 +77,7 @@ export default function Profile() {
   const urlID = useParams().userID;
   const { loggedIn, userID, token } = useContext(LoginContext);
   const [refreshtoken, setRefreshToken] = useState<number>(0);
+  const [refreshOnDelete, setRefreshOnDelete] = useState(0);
   const navigate = useNavigate();
   // User states
   const [profile, setProfile] = useState<User | null>(null);
@@ -82,6 +90,9 @@ export default function Profile() {
   const [playlistName, setPlaylistName] = useState<string>("");
   const [playlistDesc, setPlaylistDesc] = useState<string>("");
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [episodesByPlaylist, setEpisodesByPlaylist] = useState<
+    Record<string, Episode[]>
+  >({});
   // Friends states
   const [friends, setFriends] = useState<Friend[]>([]);
   const [pendingList, setPendingList] = useState<Friend[]>([]);
@@ -178,7 +189,7 @@ export default function Profile() {
     getUserPodcastReviews();
     getUserEpisodeReviews();
     getUserPlaylists();
-  }, [urlID, loggedIn, userID, refreshtoken]);
+  }, [urlID, loggedIn, userID, refreshtoken, refreshOnDelete]);
 
   // Get relationship status
   function getRelationship(
@@ -415,6 +426,60 @@ export default function Profile() {
     }
   }
 
+  async function handlePlaylistClick(playlist: string) {
+    getEpisodes(playlist);
+  }
+
+  // Episode data
+  async function getEpisodes(playlist: string) {
+    const response = await fetch(
+      `${API_URL_BASE}/users/${urlID}/playlists/${playlist}/episodes`
+    );
+    const data = await response.json();
+    setEpisodesByPlaylist((prev) => {
+      const next = { ...prev, [playlist]: data };
+      console.log(next);
+      return next;
+    });
+  }
+
+  async function handleEpisodeDelete(
+    playlist: string,
+    podcastId: string,
+    episodeNum: string
+  ) {
+    console.log("called by: ", urlID, " on playlist: ", playlist);
+    console.log(
+      "deleting: podcastId: ",
+      podcastId,
+      " episodeNum: ",
+      episodeNum
+    );
+    try {
+      const response = await fetch(
+        `${API_URL_BASE}/users/${urlID}/playlists/${playlist}/episodes`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ podcastId, episodeNum }),
+        }
+      );
+      if (!response.ok) {
+        console.error("Response from delete episode from playlist not ok");
+      } else {
+        getEpisodes(playlist);
+        setRefreshOnDelete(() => {
+          return refreshOnDelete + 1;
+        });
+      }
+    } catch (error) {
+      console.error("Failed to delete episode from playlist", error);
+    }
+  }
+
   // Guard profile
   if (!profile) return null;
 
@@ -539,7 +604,7 @@ export default function Profile() {
                 <TabsTrigger value="playlists">Playlists</TabsTrigger>
               </TabsList>
               <TabsContent value="podcastReviews">
-                <div className="flex flex-col justify-center gap-10 w-max-full">
+                <div className="flex flex-wrap justify-center gap-10 w-max-full">
                   {(podcastReviews as PodcastReview[]).map((review, i) => (
                     <ReviewCard
                       key={i}
@@ -561,7 +626,7 @@ export default function Profile() {
                 </div>
               </TabsContent>
               <TabsContent value="episodeReviews">
-                <div className="flex flex-col justify-center gap-10">
+                <div className="flex flex-wrap justify-center gap-10 w-max-full">
                   {(episodeReviews as EpisodeReview[]).map((review, i) => (
                     <ReviewCard
                       key={i}
@@ -586,7 +651,6 @@ export default function Profile() {
               </TabsContent>
               <TabsContent value="playlists">
                 {loggedIn && userID === urlID && (
-                  // Accordion test
                   <button
                     className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                     onClick={
@@ -598,10 +662,6 @@ export default function Profile() {
                     Create
                   </button>
                 )}
-                <Playlists
-                  playlists={playlists}
-                  onPlaylistDelete={handlePlaylistDelete}
-                />
                 {activeModal === "create" && (
                   <div className="bg-purple-900 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                     <form
@@ -628,6 +688,57 @@ export default function Profile() {
                     </form>
                   </div>
                 )}
+                <div>
+                  {playlists.map((playlist) => {
+                    const episodes = episodesByPlaylist[playlist.name] ?? [];
+                    return (
+                      <div key={playlist.name}>
+                        <PlaylistCard
+                          name={playlist.name}
+                          description={playlist.description}
+                          onClick={() => {
+                            handlePlaylistClick(playlist.name);
+                          }}
+                          onDelete={() => {
+                            handlePlaylistDelete(playlist.name);
+                          }}
+                        />
+                        {loggedIn && userID === urlID && (
+                          <button
+                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlaylistDelete(playlist.name);
+                            }}
+                          >
+                            Delete Playlist
+                          </button>
+                        )}
+                        {(episodes as Episode[]).map((episode) => (
+                          <ul key={episode.podcastId + episode.episodeNum}>
+                            <EpisodeCard
+                              podcastId={episode.podcastId}
+                              podcastName={episode.podcastName}
+                              episodeNum={episode.episodeNum}
+                              onClick={() =>
+                                navigate(
+                                  `/podcasts/${episode.podcastId}/episodes/${episode.episodeNum}`
+                                )
+                              }
+                              onDelete={() => {
+                                handleEpisodeDelete(
+                                  playlist.name,
+                                  episode.podcastId,
+                                  episode.episodeNum
+                                );
+                              }}
+                            />
+                          </ul>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
               </TabsContent>
             </Tabs>
           </div>
