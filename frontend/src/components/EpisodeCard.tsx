@@ -10,7 +10,6 @@ import { useNavigate } from "react-router-dom";
 
 type EpisodeCardProps = {
   podcastId: string;
-  podcastName: string;
   episodeNum: string;
   episodeName: string | null;
   description: string;
@@ -18,15 +17,15 @@ type EpisodeCardProps = {
 
 export default function EpisodeCard({
   podcastId,
-  podcastName,
   episodeNum,
   episodeName,
+  description,
 }: EpisodeCardProps) {
   const navigate = useNavigate();
   return (
     <div
       className="
-        w-fit shrink-0 cursor-pointer
+        shrink-0 cursor-pointer
         transition-all duration-150
         hover:scale-104
         activ:scale-98
@@ -36,7 +35,7 @@ export default function EpisodeCard({
     >
       <Item
         className="
-        w-fit shrink-0 cursor-pointer
+         shrink-0 cursor-pointer
         transition-all duration-150
         hover:scale-98
         activ:scale-98
@@ -50,7 +49,7 @@ export default function EpisodeCard({
           <img
             className="rounded-sm"
             src={episode}
-            alt={podcastName + " " + episodeNum}
+            alt={podcastId + " " + episodeNum}
           />{" "}
         </ItemMedia>
         <ItemContent>
@@ -58,7 +57,10 @@ export default function EpisodeCard({
             {episodeName ? episodeName : "Untitled"}
           </ItemTitle>
           <ItemDescription>
-            {podcastName + " · Episode: " + episodeNum}
+            <div className="flex flex-col">
+              <h1>{"Episode: " + episodeNum}</h1>
+              <div>{description}</div>
+            </div>
           </ItemDescription>
         </ItemContent>
       </Item>
