@@ -71,7 +71,7 @@ export default function Results() {
             />
           ))}
       </div>
-      <div className="grid md:grid-cols-5 ml-30 mr-30 gap-6">
+      <div className="grid md:grid-cols-5 ml-30 mr-30 gap-5">
         {searchType === "users" &&
           (results as UserResults[]).map((user) => (
             <UserCard
