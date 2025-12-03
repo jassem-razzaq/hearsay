@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ItemGroup } from "@/components/ui/item";
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { LoginContext } from "../contexts/LoginContext";
 import FriendCard from "./FriendCard";
 
@@ -36,12 +36,18 @@ export default function FriendsList({
   const { userID } = useContext(LoginContext);
   const navigate = useNavigate();
   const urlID = useParams().userID;
+  const [open, setOpen] = useState(false);
 
-  useEffect(() => {}, [urlID, userID]);
+  useEffect(() => {
+    function closeFriendsList() {
+      if (open) setOpen(!open);
+    }
+    closeFriendsList();
+  }, [urlID, userID]);
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild onClick={() => setOpen(true)}>
         <Button variant="outline">{title}</Button>
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] overflow-y-auto">

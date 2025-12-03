@@ -431,7 +431,7 @@ export default function Episode() {
                 <DialogHeader>
                   <DialogTitle className="mb-4">Select a Playlist</DialogTitle>
                   <DialogDescription></DialogDescription>
-                  <div className="max-h-[50vh] overflow-scroll flex flex-col gap-3">
+                  <div className="max-h-[50vh] overflow-y-auto flex flex-col gap-3">
                     {playlists.map((playlist) => (
                       <Item
                         key={playlist.name}
