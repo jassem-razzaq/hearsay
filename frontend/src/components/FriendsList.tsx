@@ -41,7 +41,6 @@ export default function FriendsList({
   useEffect(() => {
     function closeFriendsList() {
       if (open) setOpen(!open);
-      else setOpen(!open);
     }
     closeFriendsList();
   }, [urlID, userID]);
