@@ -51,7 +51,7 @@ export default function FriendsList({
         <Button variant="outline">{title}</Button>
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] overflow-y-auto">
-        <ItemGroup className="gap-3">
+        <ItemGroup className="gap-3 mt-4">
           <>
             {friends.length !== 0 &&
               (friends as Friend[]).map((user) => {
