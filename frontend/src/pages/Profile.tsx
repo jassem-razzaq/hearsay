@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { LoginContext } from "../contexts/LoginContext";
 import minimalistAvatarM from "../assets/minimalistAvatarM.jpg";
+import { RainbowButton } from "@/components/ui/rainbow-button";
 import * as React from "react";
 
 import ReviewCard from "@/components/ReviewCard";
@@ -27,7 +28,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, UserRoundPlus } from "lucide-react";
+import { Plus, Trash2, UserCheck, UserRoundPlus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -508,8 +509,6 @@ export default function Profile() {
   return (
     <>
       <div className="flex flex-col justify-center ml-30 mr-30">
-        {/* bg-linear-to-br from-fuchsia-300 to-purple-800 
-        bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400*/}
         <div className="p-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 rounded-lg">
           <Card className="mb-2.5">
             <CardContent className="flex flex-col justify-center">
@@ -544,22 +543,23 @@ export default function Profile() {
               <div className="flex flex-row items-top gap-4 p-0">
                 {/* User buttons and lists */}
                 {relationship === "none" && loggedIn && (
-                  <Button
-                    className="w-12 hover:bg-primary! hover:text-primary-foreground!"
-                    variant="outline"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSendRequest(urlID);
-                    }}
-                  >
-                    <UserRoundPlus />
-                    <span className="sr-only">Update bio</span>
-                  </Button>
+                  <div>
+                    <RainbowButton
+                      className="w-10 rounded-full"
+                      disabled={!loggedIn}
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSendRequest(urlID);
+                      }}
+                    >
+                      <UserRoundPlus />
+                    </RainbowButton>
+                  </div>
                 )}
                 {relationship === "sent" && (
                   <Button
-                    className="w-12 hover:bg-primary! hover:text-primary-foreground!"
+                    className="w-10 rounded-full hover:bg-primary! hover:text-primary-foreground!"
                     variant="outline"
                     size="icon"
                     disabled
@@ -569,12 +569,15 @@ export default function Profile() {
                   </Button>
                 )}
                 {relationship === "friends" && (
-                  <button
+                  <Button
+                    className="w-10 rounded-full hover:bg-primary! hover:text-primary-foreground!"
+                    variant="outline"
+                    size="icon"
                     disabled
-                    className="bg-blue-900 text-white font-bold py-.5 px-1 rounded"
                   >
-                    Friends
-                  </button>
+                    <UserCheck />
+                    <span className="sr-only">Update bio</span>
+                  </Button>
                 )}
                 {userID === urlID && (
                   <UserBio
