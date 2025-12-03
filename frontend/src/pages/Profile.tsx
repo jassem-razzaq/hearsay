@@ -692,6 +692,7 @@ export default function Profile() {
                     const episodes = episodesByPlaylist[playlist.name] ?? [];
                     return (
                       <AccordionItem
+                        key={playlist.name}
                         className="m-2 p-2 rounded-lg bg-card"
                         value={playlist.name}
                         onClick={() => {
