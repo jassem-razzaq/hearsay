@@ -2,18 +2,11 @@ import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { LoginContext } from "../contexts/LoginContext";
 import SearchBar from "@/components/SearchBar";
-import {
-  Card,
-  CardHeader,
-  CardDescription,
-  CardContent,
-  CardFooter,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardDescription, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import podcast from "../assets/minimalistMicrophone.jpg";
 import dateFormat from "@/utils/dateFormat";
-import { faStar, faEyeSlash, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faEyeSlash, faTrash, faFaceSadCry } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Label } from "@radix-ui/react-label";
 import { Rating, RatingButton } from "@/components/ui/shadcn-io/rating";
@@ -28,18 +21,22 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import confetti from "canvas-confetti";
 import PageReviewCard from "@/components/PageReviewCard";
 import Autoplay from "embla-carousel-autoplay";
 import EpisodeCard from "@/components/EpisodeCard";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemFooter,
+  ItemHeader,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
 
 type PodcastInfo = {
   name: string;
@@ -107,7 +104,7 @@ export default function Podcast() {
   }>({ rating: "", comment: "" });
   const [genreList, setGenreList] = useState<string[]>([]);
   const [openReview, setOpenReview] = useState<boolean>(false);
-  const [searchedEpisodes, setSearchedEpisodes] = useState<Episode[]>([]);
+  const [searchedEpisodes, setSearchedEpisodes] = useState<Episode[] | null>(null);
 
   useEffect(() => {
     if (loggedIn) return;
@@ -128,9 +125,7 @@ export default function Podcast() {
     async function fetchUserReview() {
       if (!loggedIn) return;
       try {
-        const response = await fetch(
-          `${API_URL_BASE}/podcasts/${podcastID}/reviews/${userID}`
-        );
+        const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/reviews/${userID}`);
         const data: UserReview = await response.json();
         if (data) {
           setFormReview({ rating: data.rating, comment: data.comment });
@@ -144,9 +139,7 @@ export default function Podcast() {
     async function fetchFriendReviews() {
       if (!loggedIn) return;
       try {
-        const response = await fetch(
-          `${API_URL_BASE}/podcasts/${podcastID}/reviews/${userID}/friends`
-        );
+        const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/reviews/${userID}/friends`);
         const data = await response.json();
         console.log(data);
         setFriendReviews(data);
@@ -179,9 +172,7 @@ export default function Podcast() {
 
   async function fetchPodcastRatings() {
     try {
-      let response = await fetch(
-        `${API_URL_BASE}/podcasts/${podcastID}/ratings`
-      );
+      let response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/ratings`);
       let data: PodcastRatings = await response.json();
       setRatings((prevRatings) => ({
         ...prevRatings,
@@ -189,9 +180,7 @@ export default function Podcast() {
         globalAvgRatingByEp: data.globalAvgRatingByEp,
       }));
       if (loggedIn) {
-        response = await fetch(
-          `${API_URL_BASE}/podcasts/${podcastID}/ratings/${userID}/friends`
-        );
+        response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/ratings/${userID}/friends`);
         data = await response.json();
         setRatings((prevRatings) => ({
           ...prevRatings,
@@ -211,20 +200,17 @@ export default function Podcast() {
       return;
     }
     try {
-      const response = await fetch(
-        `${API_URL_BASE}/podcasts/${podcastID}/reviews/${userID}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            rating: formReview.rating,
-            comment: formReview.comment ?? "",
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/reviews/${userID}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rating: formReview.rating,
+          comment: formReview.comment ?? "",
+        }),
+      });
       const data = await response.json();
       if (!response.ok) {
         toast.error(data.detail);
@@ -255,20 +241,17 @@ export default function Podcast() {
       return;
     }
     try {
-      const response = await fetch(
-        `${API_URL_BASE}/podcasts/${podcastID}/reviews/${userID}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            rating: formReview.rating,
-            comment: formReview.comment ?? "",
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/reviews/${userID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rating: formReview.rating,
+          comment: formReview.comment ?? "",
+        }),
+      });
       const data = await response.json();
       if (!response.ok) {
         toast.error(data.detail);
@@ -288,16 +271,13 @@ export default function Podcast() {
 
   async function handleDeleteReview() {
     try {
-      const response = await fetch(
-        `${API_URL_BASE}/podcasts/${podcastID}/reviews/${userID}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/reviews/${userID}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       if (!response.ok) {
         toast.error(data.detail);
@@ -320,13 +300,9 @@ export default function Podcast() {
             <CardHeader className="text-5xl md:text-6xl font-extrabold tracking-tight text-gray-900">
               {podcastInfo.name}
             </CardHeader>
-            <CardContent className="text-gray-700 text-lg md:text-xl">
-              {podcastInfo.description}
-            </CardContent>
+            <CardContent className="text-gray-700 text-lg md:text-xl">{podcastInfo.description}</CardContent>
             <CardFooter className="flex flex-row justify-between items-center">
-              <span className="text-gray-700 text-sm">
-                Released: {dateFormat(podcastInfo.releaseDate)}
-              </span>
+              <span className="text-gray-700 text-sm">Released: {dateFormat(podcastInfo.releaseDate)}</span>
               <div className="flex flex-row gap-2">
                 {genreList &&
                   genreList.map((genre) => (
@@ -358,10 +334,7 @@ export default function Podcast() {
             <div>
               <Dialog>
                 <DialogTrigger asChild>
-                  <RainbowButton
-                    className="hover:scale-102 duration-175"
-                    disabled={!loggedIn}
-                  >
+                  <RainbowButton className="hover:scale-102 duration-175" disabled={!loggedIn}>
                     Update Review
                   </RainbowButton>
                 </DialogTrigger>
@@ -370,14 +343,10 @@ export default function Podcast() {
                   <DialogHeader>
                     <DialogTitle className="text-xl">Update Review</DialogTitle>
                     <DialogDescription>
-                      Your last review written on{" "}
-                      {dateFormat(userReview.createdAt)}
+                      Your last review written on {dateFormat(userReview.createdAt)}
                     </DialogDescription>
                   </DialogHeader>
-                  <form
-                    className="flex flex-col gap-5"
-                    onSubmit={(e) => handleUpdateReview(e)}
-                  >
+                  <form className="flex flex-col gap-5" onSubmit={(e) => handleUpdateReview(e)}>
                     <Label className="font-medium">Rating</Label>
                     <Rating
                       className="flex justify-center"
@@ -415,10 +384,7 @@ export default function Podcast() {
                         </Button>
                       </DialogClose>
                       <DialogClose asChild>
-                        <Button
-                          className="cursor-pointer hover:scale-102 duration-150"
-                          type="submit"
-                        >
+                        <Button className="cursor-pointer hover:scale-102 duration-150" type="submit">
                           Update
                         </Button>
                       </DialogClose>
@@ -431,24 +397,16 @@ export default function Podcast() {
             <div className="flex justify-end">
               <Dialog open={openReview} onOpenChange={setOpenReview}>
                 <DialogTrigger asChild>
-                  <RainbowButton
-                    className="hover:scale-102 duration-175"
-                    disabled={!loggedIn}
-                  >
+                  <RainbowButton className="hover:scale-102 duration-175" disabled={!loggedIn}>
                     Review
                   </RainbowButton>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle className="text-xl">Review</DialogTitle>
-                    <DialogDescription>
-                      What do you think of this podcast?
-                    </DialogDescription>
+                    <DialogDescription>What do you think of this podcast?</DialogDescription>
                   </DialogHeader>
-                  <form
-                    className="flex flex-col gap-5"
-                    onSubmit={(e) => handleCreateReview(e)}
-                  >
+                  <form className="flex flex-col gap-5" onSubmit={(e) => handleCreateReview(e)}>
                     <Label className="font-medium">Rating</Label>
                     <Rating
                       className="flex justify-center"
@@ -474,10 +432,7 @@ export default function Podcast() {
                       }
                     />
                     <div className="flex justify-end">
-                      <Button
-                        type="submit"
-                        className="self-start cursor-pointer hover:scale-102 duration-150"
-                      >
+                      <Button type="submit" className="self-start cursor-pointer hover:scale-102 duration-150">
                         Submit
                       </Button>
                     </div>
@@ -501,13 +456,9 @@ export default function Podcast() {
 
           <Card className="hover:scale-98 duration-300 hover:shadow-lg">
             <CardContent className="flex flex-col items-center justify-center h-20 gap-3">
-              <p className="text-md font-medium text-center">
-                Average Episode Rating
-              </p>
+              <p className="text-md font-medium text-center">Average Episode Rating</p>
               <div className="flex flex-row items-center gap-2">
-                <p className="text-3xl font-bold">
-                  {ratings.globalAvgRatingByEp}
-                </p>
+                <p className="text-3xl font-bold">{ratings.globalAvgRatingByEp}</p>
                 <FontAwesomeIcon icon={faStar} className="text-xl" />
               </div>
             </CardContent>
@@ -515,17 +466,13 @@ export default function Podcast() {
 
           <Card className="hover:scale-98 duration-300 hover:shadow-lg">
             <CardContent className="flex flex-col items-center justify-center h-20 gap-3">
-              <p className="text-md font-medium text-center">
-                What Your Friends Think
-              </p>
+              <p className="text-md font-medium text-center">What Your Friends Think</p>
               <div className="flex flex-row items-center gap-2">
                 {!loggedIn ? (
                   <FontAwesomeIcon icon={faEyeSlash} className="text-xl" />
                 ) : (
                   <div className="flex flex-row items-center gap-2">
-                    <p className="text-3xl font-bold">
-                      {ratings.friendsAvgRating}
-                    </p>
+                    <p className="text-3xl font-bold">{ratings.friendsAvgRating}</p>
                     <FontAwesomeIcon icon={faStar} className="text-xl" />
                   </div>
                 )}
@@ -535,17 +482,13 @@ export default function Podcast() {
 
           <Card className="hover:scale-98 duration-300 hover:shadow-lg">
             <CardContent className="flex flex-col items-center justify-center h-20 gap-3">
-              <p className="text-md font-medium text-center">
-                How Your Friends Rate Each Episode
-              </p>
+              <p className="text-md font-medium text-center">How Your Friends Rate Each Episode</p>
               <div className="flex flex-row items-center gap-2">
                 {!loggedIn ? (
                   <FontAwesomeIcon icon={faEyeSlash} className="text-xl" />
                 ) : (
                   <div className="flex flex-row items-center gap-2">
-                    <p className="text-3xl font-bold">
-                      {ratings.friendsAvgRatingByEp}
-                    </p>
+                    <p className="text-3xl font-bold">{ratings.friendsAvgRatingByEp}</p>
                     <FontAwesomeIcon icon={faStar} className="text-xl" />
                   </div>
                 )}
@@ -556,9 +499,7 @@ export default function Podcast() {
       </Card>
 
       <Card className="flex flex-col bg-background border-none shadow-none px-5">
-        <CardTitle className="text-xl font-bold">
-          Reviews From Your Friends
-        </CardTitle>
+        <CardTitle className="text-xl font-bold">Reviews From Your Friends</CardTitle>
         <CardContent>
           {friendReviews.length > 0 ? (
             <Carousel
@@ -574,10 +515,7 @@ export default function Podcast() {
             >
               <CarouselContent className="-ml-4 my-3 xl:-ml-31">
                 {friendReviews.map((review, index) => (
-                  <CarouselItem
-                    key={index}
-                    className="xl:pl-35 md:basis-1/2 lg:basis-1/3 xl:basis-1/4"
-                  >
+                  <CarouselItem key={index} className="xl:pl-35 md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
                     <PageReviewCard
                       id={review.id}
                       rating={review.rating}
@@ -599,9 +537,7 @@ export default function Podcast() {
               <Card className="w-100 text-center h-35 justify-center">
                 <CardHeader>
                   <CardTitle>No reviews</CardTitle>
-                  <CardDescription>
-                    No friends have reviewed this podcast yet
-                  </CardDescription>
+                  <CardDescription>No friends have reviewed this podcast yet</CardDescription>
                 </CardHeader>
               </Card>
             </div>
@@ -612,9 +548,7 @@ export default function Podcast() {
       {/* Search episodes */}
       <Card className="flex flex-col items-center mt-5 rounded-sm h-screen">
         <CardHeader>
-          <CardTitle className="text-nowrap -translate-x-1/2 text-3xl font-bold">
-            Search Episodes
-          </CardTitle>
+          <CardTitle className="text-nowrap -translate-x-1/2 text-3xl font-bold">Search Episodes</CardTitle>
         </CardHeader>
         <CardContent>
           <SearchBar
@@ -624,9 +558,7 @@ export default function Podcast() {
               Object.entries(searchFilters).forEach(([filter, value]) => {
                 if (value) params.append(filter, value);
               });
-              const response = await fetch(
-                `${API_URL_BASE}/podcasts/${podcastID}/episodes?${params.toString()}`
-              );
+              const response = await fetch(`${API_URL_BASE}/podcasts/${podcastID}/episodes?${params.toString()}`);
               const data = await response.json();
               console.log(data);
               setSearchedEpisodes(data);
@@ -649,6 +581,30 @@ export default function Podcast() {
               );
             })}
         </div>
+        {searchedEpisodes !== null && searchedEpisodes.length === 0 && (
+          <div className="flex-1 flex items-center justify-center">
+            <Item>
+              <ItemContent>
+                <ItemTitle>
+                  <FontAwesomeIcon icon={faFaceSadCry} className="text-4xl" />
+                  <div>
+                    <p className="text-xl font-semibold">No results found</p>
+                    <p
+                      className="hover:underline cursor-pointer font-normal"
+                      onClick={() =>
+                        window.open(
+                          "https://docs.google.com/forms/d/e/1FAIpQLSePK2Q0wuY3q28Ek9UPIeBpenYY3EMg6gEqtZmuGxKx16xZwA/viewform?usp=header"
+                        )
+                      }
+                    >
+                      Report missing?
+                    </p>
+                  </div>
+                </ItemTitle>
+              </ItemContent>
+            </Item>
+          </div>
+        )}
       </Card>
     </>
   );
