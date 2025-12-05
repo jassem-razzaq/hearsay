@@ -141,8 +141,11 @@ export default function NavBar() {
 
   return (
     <div className="flex bg-popover h-16 top-0 left-0 justify-between items-center px-3">
-      <Button className="p-0 bg-white cursor-pointer flex justify-center items-center" onClick={() => navigate("/")}>
-        <img className="w-30 rounded-full" src={logo} />
+      <Button
+        className="p-1 w-11 h-11 bg-white cursor-pointer flex justify-center items-center rounded-full hover:bg-white"
+        onClick={() => navigate("/")}
+      >
+        <img className="w-10 overflow-hidden rounded-full" src={microphoneIcon} />
       </Button>
       <div className="flex justify-center items-center">
         <Select value={searchType} onValueChange={(value: SearchType) => setSearchType(value)}>
