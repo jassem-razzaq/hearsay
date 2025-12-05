@@ -551,7 +551,14 @@ CREATE PROCEDURE search_episodes
     IN year_p INT
 )
 BEGIN
-    SELECT * FROM episode
+    SELECT 
+        DISTINCT episode.podcast_id AS podcast_id, 
+        episode.episode_num AS episode_num, 
+        episode.name AS name, 
+        description, 
+        duration, 
+        release_date 
+    FROM episode
     LEFT JOIN episode_to_host AS eth 
         ON episode.podcast_id = eth.podcast_id
         AND episode.episode_num = eth.episode_num
@@ -573,13 +580,13 @@ DELIMITER ;
 
 -- CALL search_episodes
 -- (
---     5, -- IN podcast_id_p INT,
+--     3, -- IN podcast_id_p INT,
 --     NULL, -- IN episode_num_p INT,
 -- 	NULL, -- IN episode_name_p VARCHAR(32),
 --     NULL, -- IN host_first_p VARCHAR(32),
 --     NULL, -- IN host_last_p VARCHAR(32),
---     "Michelle", -- IN guest_first_p VARCHAR(32),
---     "Obama", -- IN guest_last_p VARCHAR(32),
+--     NULL, -- IN guest_first_p VARCHAR(32),
+--     NULL, -- IN guest_last_p VARCHAR(32),
 --     NULL -- IN year_p INT
 -- );
 
