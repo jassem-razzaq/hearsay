@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr
 from dotenv import load_dotenv
-from ..db import db_cursor
+from db import db_cursor
 
 load_dotenv()
 router = APIRouter(prefix="/users")

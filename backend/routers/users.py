@@ -2,10 +2,10 @@ import pymysql
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr
-from ..db import db_cursor
-from .auth import getCurrentUser
-from .playlists import router as playlist_router
-from ..utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
+from db import db_cursor
+from auth import getCurrentUser
+from playlists import router as playlist_router
+from utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
 
 router = APIRouter(prefix="/users")
 router.include_router(playlist_router, prefix="/{user_id}/playlists")
