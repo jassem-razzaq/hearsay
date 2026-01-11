@@ -3,9 +3,9 @@ import pymysql
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from pydantic import BaseModel
-from auth import getCurrentUser
-from db import db_cursor
-from utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
+from backend.routers.auth import getCurrentUser
+from backend.db import db_cursor
+from backend.utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
 
 
 class Review(BaseModel):
@@ -74,7 +74,7 @@ async def getFilters(podcast_id: int):
 
             cursor.callproc("get_podcast_guests", (podcast_id,))
             guest_rows = cursor.fetchall()
-            guests = [f"{row["first_name"]} {row["last_name"]}" for row in guest_rows]
+            guests = [f"{row['first_name']} {row['last_name']}" for row in guest_rows]
             filters["guests"] = guests
 
             return filters

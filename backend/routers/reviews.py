@@ -2,10 +2,10 @@ import pymysql
 
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
-from db import db_cursor
-from auth import getCurrentUser
+from backend.db import db_cursor
+from backend.routers.auth import getCurrentUser
 from pydantic import BaseModel
-from utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
+from backend.utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
 
 class Review(BaseModel):
     rating: int

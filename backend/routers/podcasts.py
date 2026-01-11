@@ -3,10 +3,10 @@ import pymysql
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from pydantic import BaseModel
-from db import db_cursor
-from episodes import router as episodes_router
-from reviews import router as reviews_router
-from utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
+from backend.db import db_cursor
+from backend.routers.episodes import router as episodes_router
+from backend.routers.reviews import router as reviews_router
+from backend.utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
 
 class Review(BaseModel):
     rating: int
@@ -73,17 +73,17 @@ async def getFilters():
 
             cursor.callproc("get_all_genres")
             genre_rows = cursor.fetchall()
-            genres = [f"{row["genre_name"]}" for row in genre_rows]
+            genres = [f"{row['genre_name']}" for row in genre_rows]
             filters["genres"] = genres
 
             cursor.callproc("get_all_languages")
             language_rows = cursor.fetchall()
-            languages = [f"{row["language_name"]}" for row in language_rows]
+            languages = [f"{row['language_name']}" for row in language_rows]
             filters["languages"] = languages
 
             cursor.callproc("get_all_platforms")
             platform_rows = cursor.fetchall()
-            platforms = [f"{row["platform_name"]}" for row in platform_rows]
+            platforms = [f"{row['platform_name']}" for row in platform_rows]
             filters["platforms"] = platforms
 
             cursor.callproc("get_all_hosts")
@@ -93,7 +93,7 @@ async def getFilters():
 
             cursor.callproc("get_all_guests")
             guest_rows = cursor.fetchall()
-            guests = [f"{row["first_name"]} {row["last_name"]}" for row in guest_rows]
+            guests = [f"{row['first_name']} {row['last_name']}" for row in guest_rows]
             filters["guests"] = guests
 
             return filters
