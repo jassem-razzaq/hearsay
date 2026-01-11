@@ -2,8 +2,8 @@ import pymysql
 
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
-from db import db_cursor
 from pydantic import BaseModel
+from db import db_cursor
 from episodes import router as episodes_router
 from reviews import router as reviews_router
 from utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel

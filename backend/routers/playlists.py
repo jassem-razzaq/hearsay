@@ -1,9 +1,9 @@
 import pymysql
 
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
 from db import db_cursor
 from auth import getCurrentUser
-from pydantic import BaseModel
 from utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
 
 router = APIRouter()

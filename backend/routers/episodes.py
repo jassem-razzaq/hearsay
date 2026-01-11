@@ -2,9 +2,9 @@ import pymysql
 
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
+from pydantic import BaseModel
 from auth import getCurrentUser
 from db import db_cursor
-from pydantic import BaseModel
 from utils.convertSnakeToCamel import convertListKeyToCamel, convertDictKeyToCamel
 
 
