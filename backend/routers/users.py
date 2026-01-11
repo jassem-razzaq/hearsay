@@ -1,7 +1,7 @@
 import pymysql
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr
-
 from ..db import db_cursor
 from .auth import getCurrentUser
 from .playlists import router as playlist_router
