@@ -44,7 +44,7 @@ export default function Results() {
     async function fetchResults() {
       let url = "";
       if (searchType === "podcasts") {
-        url = `${API_URL_BASE}/podcasts?${params.toString()}`;
+        url = `${API_URL_BASE}/podcasts/?${params.toString()}`;
       } else {
         const username = params.get("name");
         if (!username) {
