@@ -154,7 +154,7 @@ export default function Profile() {
     // Playlist data
     async function getUserPlaylists() {
       const response: Response = await fetch(
-        `${API_URL_BASE}/users/${urlID}/playlists`
+        `${API_URL_BASE}/users/${urlID}/playlists/`
       );
       const data = await response.json();
       setPlaylists(data);
